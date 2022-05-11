@@ -1,19 +1,18 @@
 <template>
-  <div id="edit-student">
-    <h1 v-if="is_edit">学生信息 {{ student.name }} 修改</h1>
-    <h1 v-else>学生信息添加</h1>
+  <div id="register">
+    <h1>个人信息</h1>
 
-    <p>
+    <!-- <p>
       <router-link :to="{ name: 'all_students' }"
         >返回学生信息列表页面</router-link
       >
-    </p>
+    </p> -->
 
     <notification v-bind:notifications="notifications"></notification>
 
-    <form v-on:submit.prevent="editStudent">
+    <form v-on:submit.prevent="update_info">
       <div class="form-group">
-        <label name="student_id">ID</label>
+        <label name="student_id">ID (无法修改)</label>
         <input
           type="text"
           class="form-control"
@@ -46,18 +45,38 @@
       </div>
 
       <div class="form-group">
-        <label name="student_password">密码</label>
+        <label name="current_password">现在密码</label>
         <input
           type="password"
           class="form-control"
-          v-model="student.password"
+          v-model="student.current_password"
           id="student_password"
           required
         />
       </div>
 
       <div class="form-group">
-        <button class="btn btn-primary">提交</button>
+        <label name="student_password">更新密码</label>
+        <input
+          type="password"
+          class="form-control"
+          v-model="student.password"
+          id="student_password"
+        />
+      </div>
+
+      <div class="form-group">
+        <label name="student_password">再次输入密码</label>
+        <input
+          type="password"
+          class="form-control"
+          v-model="student.password2"
+          id="student_password"
+        />
+      </div>
+
+      <div class="form-group">
+        <button class="btn btn-primary">更新</button>
       </div>
     </form>
   </div>
@@ -66,36 +85,26 @@
 <script>
 import Notification from "./notifications.vue";
 
-import backend_link from "../const.vue";
+import { backend_link } from "../const.vue";
+
 
 export default {
   data() {
     return {
       student: {},
       notifications: [],
-      is_edit: true
     };
   },
 
-  created: function () {
-    this.is_edit = this.getStudent();
-  },
-  
-  computed: {
-    mode_str() {
-      return this.is_edit ? '修改' : '添加';
-    }
-  },
-
   methods: {
-    getStudent: function () {
-      let input_data = this.$route.params.stu;
-      if (input_data) this.student = input_data;
-      else return false;
-      return true;
-    },
-
-    editStudent: function () {
+    update_info: function () {
+      if (this.student.password != this.student.password2) {
+        this.notifications.push({
+          type: "error",
+          message: "两次密码不一致",
+        });
+        return;
+      }
       this.$http
         .put(backend_link + "student", this.student, {
           headers: {
@@ -106,13 +115,13 @@ export default {
           (response) => {
             this.notifications.push({
               type: "success",
-              message: "学生信息" + this.mode_str + "成功",
+              message: "信息更新成功",
             });
           },
           (response) => {
             this.notifications.push({
               type: "error",
-              message: "学生信息" + this.mode_str + "失败",
+              message: "信息更新失败",
             });
           }
         );

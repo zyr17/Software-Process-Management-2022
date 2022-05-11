@@ -3,9 +3,8 @@
     <h1>学生管理</h1>
 
     <p>
-      <router-link :to="{ name: 'add_student' }" class="btn btn-primary"
-        >添加学生信息</router-link
-      >
+      <router-link :to="{ name: 'edit_student' }" class="btn btn-primary"
+        >添加学生信息</router-link>
     </p>
 
     <div class="form-group">
@@ -15,7 +14,6 @@
         v-model="studentSearch"
         placeholder="Search Students"
         class="form-control"
-        v-on:keyup="searchStudents"
       />
     </div>
 
@@ -40,10 +38,10 @@
               class="btn btn-primary"
               >修改</router-link
             >
-            <router-link
-              :to="{ name: 'delete_student', params: { stu: student } }"
+            <button
+              @click="deleteStudent"
               class="btn btn-danger"
-              >删除</router-link
+              >删除</button
             >
           </td>
         </tr>
@@ -59,8 +57,18 @@ import { backend_link } from "../const.vue"
 export default {
   data() {
     return {
-      students: [],
-      originalStudents: [],
+      originalStudents: [
+        {
+          id: 1,
+          stuNum: 123456,
+          name: 'zhangsan'
+        },
+        {
+          id: 2,
+          stuNum: 654321,
+          name: 'lisi'
+        }
+      ],
       studentSearch: "",
     };
   },
@@ -68,22 +76,11 @@ export default {
   created: function () {
     this.fetchStudentData();
   },
-
-  methods: {
-    fetchStudentData: function () {
-      this.$http.get(backend_link + "student").then(
-        (response) => {
-          this.students = response.body;
-          this.originalStudents = this.students;
-        },
-        (response) => {}
-      );
-    },
-
-    searchStudents: function () {
+  
+  computed: {
+    students() {
       if (this.studentSearch == "") {
-        this.students = this.originalStudents;
-        return;
+        return this.originalStudents;
       }
 
       var searchedStudents = [];
@@ -93,9 +90,38 @@ export default {
           searchedStudents.push(this.originalStudents[i]);
         }
       }
+      return searchedStudents;
+    }
+  },
 
-      this.students = searchedStudents;
+  methods: {
+    fetchStudentData: function () {
+      this.$http.get(backend_link + "student").then(
+        (response) => {
+          this.originalStudents = response.body;
+        },
+        (response) => {}
+      );
     },
+    deleteStudent: function () {
+      this.$http
+        .delete(backend_link + "student/" + this.student.stuNum, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+        .then(
+          (response) => {
+            this.$router.push({ name: "all_students" });
+          },
+          (response) => {
+            this.notifications.push({
+              type: "danger",
+              message: "学生信息无法删除",
+            });
+          }
+        );
+    }
   },
 };
 </script>

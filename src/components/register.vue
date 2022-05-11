@@ -1,18 +1,18 @@
 <template>
-  <div id="add_student">
-    <h1>添加学生信息</h1>
+  <div id="register">
+    <h1>注册</h1>
 
-    <p>
+    <!-- <p>
       <router-link :to="{ name: 'all_students' }"
         >返回学生信息列表页面</router-link
       >
-    </p>
+    </p> -->
 
     <notification v-bind:notifications="notifications"></notification>
 
-    <form v-on:submit.prevent="addStudent">
+    <form v-on:submit.prevent="register">
       <div class="form-group">
-        <label name="student_id">ID</label>
+        <label name="student_id">ID (自动生成)</label>
         <input
           type="text"
           class="form-control"
@@ -56,6 +56,17 @@
       </div>
 
       <div class="form-group">
+        <label name="student_password">再次输入密码</label>
+        <input
+          type="password"
+          class="form-control"
+          v-model="student.password2"
+          id="student_password"
+          required
+        />
+      </div>
+
+      <div class="form-group">
         <button class="btn btn-primary">添加</button>
       </div>
     </form>
@@ -77,7 +88,14 @@ export default {
   },
 
   methods: {
-    addStudent: function () {
+    register: function () {
+      if (this.student.password != this.student.password2) {
+        this.notifications.push({
+          type: "error",
+          message: "两次密码不一致",
+        });
+        return;
+      }
       this.$http
         .post(backend_link + "student", this.student, {
           headers: {
@@ -88,13 +106,13 @@ export default {
           (response) => {
             this.notifications.push({
               type: "success",
-              message: "学生信息添加成功",
+              message: "学生注册成功",
             });
           },
           (response) => {
             this.notifications.push({
               type: "error",
-              message: "学生信息添加失败",
+              message: "学生注册失败",
             });
           }
         );
