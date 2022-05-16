@@ -2,10 +2,10 @@
   <div id="all_students">
     <h1>学生管理</h1>
 
-    <p>
+    <!-- <p>
       <router-link :to="{ name: 'edit_student' }" class="btn btn-primary"
         >添加学生信息</router-link>
-    </p>
+    </p> -->
 
     <div class="form-group">
       <input
