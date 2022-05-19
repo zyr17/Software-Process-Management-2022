@@ -45,6 +45,9 @@ import Notification from "./notifications.vue";
 
 import { backend_link } from "../const.vue";
 
+import store from '../store';
+
+let auth = store.state.auth;
 
 export default {
   data() {
