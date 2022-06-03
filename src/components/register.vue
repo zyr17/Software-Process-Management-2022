@@ -11,8 +11,8 @@
     <notification v-bind:notifications="notifications"></notification>
 
     <form v-on:submit.prevent="register">
-      <div class="form-group">
-        <label name="student_id">ID (自动生成)</label>
+      <div class="form-group" style="display: none">
+        <label name="student_id">ID (自动生成, 无需填写)</label>
         <input
           type="text"
           class="form-control"
@@ -56,22 +56,33 @@
       </div>
 
       <div class="form-group">
-        <label name="student_password">再次输入密码</label>
+        <label name="student_password_1">再次输入密码</label>
         <input
           type="password"
           class="form-control"
           v-model="student.password2"
-          id="student_password"
+          id="student_password_1"
           required
         />
       </div>
 
       <div class="form-group">
-        <button class="btn btn-primary">添加</button>
+        <button class="btn btn-primary">注册</button>
       </div>
     </form>
   </div>
 </template>
+
+<style lang="css" scoped>
+#register {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#register > * {
+  width: 400px;
+}
+</style>
 
 <script>
 import Notification from "./notifications.vue";

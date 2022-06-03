@@ -1,5 +1,5 @@
 <template>
-  <div id="register">
+  <div id="info">
     <h1>个人信息</h1>
 
     <!-- <p>
@@ -50,7 +50,7 @@
           type="password"
           class="form-control"
           v-model="student.current_password"
-          id="student_password"
+          id="current_password"
           required
         />
       </div>
@@ -66,12 +66,12 @@
       </div>
 
       <div class="form-group">
-        <label name="student_password">再次输入密码</label>
+        <label name="student_password_1">再次输入密码</label>
         <input
           type="password"
           class="form-control"
           v-model="student.password2"
-          id="student_password"
+          id="student_password_1"
         />
       </div>
 
@@ -81,6 +81,17 @@
     </form>
   </div>
 </template>
+
+<style lang="css" scoped>
+#info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#info > * {
+  width: 400px;
+}
+</style>
 
 <script>
 import Notification from "./notifications.vue";

@@ -63,6 +63,17 @@
   </div>
 </template>
 
+<style lang="css" scoped>
+#edit-student {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#edit-student > * {
+  width: 400px;
+}
+</style>
+
 <script>
 import Notification from "./notifications.vue";
 

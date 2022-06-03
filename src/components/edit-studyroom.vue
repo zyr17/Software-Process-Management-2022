@@ -11,7 +11,7 @@
     <notification v-bind:notifications="notifications"></notification>
 
     <form v-on:submit.prevent="editstudyroom">
-      <div class="form-group">
+      <div class="form-group" style="display: none">
         <label name="studyroom_id">ID</label>
         <input
           type="text"
@@ -72,6 +72,18 @@
     </form>
   </div>
 </template>
+
+<style lang="css" scoped>
+#edit-studyroom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#edit-studyroom > * {
+  width: 400px;
+}
+</style>
+
 
 <script>
 import Notification from "./notifications.vue";

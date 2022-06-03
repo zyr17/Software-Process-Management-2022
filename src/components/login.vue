@@ -1,5 +1,5 @@
 <template>
-  <div id="login_account">
+  <div id="login-account">
     <h1>登录</h1>
 
     <notification v-bind:notifications="notifications"></notification>
@@ -33,6 +33,18 @@
     </form>
   </div>
 </template>
+
+
+<style lang="css" scoped>
+#login-account {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#login-account > * {
+  width: 400px;
+}
+</style>
 
 <script>
 import Notification from "./notifications.vue";

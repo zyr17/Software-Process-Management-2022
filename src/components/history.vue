@@ -53,7 +53,7 @@ import { backend_link } from "../const.vue";
 
 import store from "../store";
 
-auth = store.state.auth;
+let auth = store.state.auth;
 
 export default {
   data() {

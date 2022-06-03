@@ -1,5 +1,5 @@
 <template>
-  <div id="all_studyrooms">
+  <div id="all-studyrooms">
     <h1>自习室管理</h1>
 
     <p>
