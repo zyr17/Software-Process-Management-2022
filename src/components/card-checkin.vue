@@ -13,6 +13,7 @@
             type="text"
             class="form-control"
             v-model="buildingNumber"
+            placeholder="手动填写，如：JB, GHX, Z"
             id="building_number"
             required
           />
@@ -23,6 +24,7 @@
             type="text"
             class="form-control"
             v-model="classRoomNumber"
+            placeholder="手动填写，如：JB101, GHX502, Z2201"
             id="classroom_number"
             required
           />
@@ -33,6 +35,7 @@
             type="text"
             class="form-control"
             v-model="cardId"
+            placeholder="刷卡自动填写(未实现)"
             id="card_id"
             required
           />

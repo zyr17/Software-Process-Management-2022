@@ -12,7 +12,7 @@
         type="text"
         name="search"
         v-model="studyRoomsSearch"
-        placeholder="Search Study Room"
+        placeholder="根据自习室搜索"
         class="form-control"
       />
     </div>

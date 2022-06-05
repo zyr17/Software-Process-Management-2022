@@ -25,6 +25,7 @@
             type="text"
             class="form-control"
             v-model="current_position"
+            placeholder="点击获取地理位置(未实现)"
             id="current_position"
             required
           />

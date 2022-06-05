@@ -12,7 +12,7 @@
         type="text"
         name="search"
         v-model="studentSearch"
-        placeholder="Search Students"
+        placeholder="根据姓名搜索"
         class="form-control"
       />
     </div>
