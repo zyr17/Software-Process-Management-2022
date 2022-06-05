@@ -18,6 +18,7 @@ const Login = require('./components/login.vue');
 const History = require('./components/history.vue')
 const Checkin = require('./components/checkin.vue')
 const CardCheckin = require('./components/card-checkin.vue')
+const Book = require('./components/book.vue')
 
 const routes = [
     {
@@ -39,6 +40,11 @@ const routes = [
         name: 'info',
         path: '/personal_info',
         component: Info
+    },
+    {
+        name: 'book',
+        path: '/book',
+        component: Book
     },
     {
         name: 'checkin',
