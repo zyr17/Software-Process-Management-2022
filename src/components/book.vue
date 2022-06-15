@@ -1,10 +1,10 @@
 <template>
   <div id="history">
-    <h1>预定详情和签到</h1>
+    <h1>自习室预约</h1>
 
     <notification v-bind:notifications="notifications"></notification>
 
-    <div v-if="!is_booked">
+    <div v-if="is_booked">
       <p>你已经预约了自习室！点击签到查看详情。</p>
     </div>
     <div v-else>
@@ -52,7 +52,7 @@ export default {
         checkinTime: '-',
         status: 'booking',
       },
-      is_booked: true,
+      is_booked: false,
       notifications: [],
       current_position: '',
     };
