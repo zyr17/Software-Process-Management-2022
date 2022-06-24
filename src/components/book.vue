@@ -11,7 +11,12 @@
 
       <div>
         <el-select v-model="selectedBuilding" placeholder="选择楼栋">
-          <el-option v-for="i in buildingList" :key="i" :label="i" :value="i"></el-option>
+          <el-option 
+            v-for="i in buildingList" 
+            :key="i" 
+            :label="i" 
+            :value="i"
+          ></el-option>
         </el-select>
       </div>
 
@@ -41,7 +46,9 @@
       </div>
 
       <div class="form-group">
-        <button class="btn btn-success">预定</button>
+        <button class="btn btn-success" @click="random">随机选择</button>
+        <button class="btn btn-success" @click="quick">快速选择</button>
+        <button class="btn btn-success" @click="book">预约</button>
       </div>
     </div>
       
@@ -124,7 +131,8 @@ export default {
           arr.push(i.classRoomNumber)
       arr = Array.from(new Set(arr))
       arr.sort()
-      this.selectedClassroom = ''
+      if (arr.indexOf(this.selectedClassroom) == -1)
+        this.selectedClassroom = ''
       return arr
     },
     availableSeatList () {
@@ -137,7 +145,10 @@ export default {
             for (let j of i.book)
               arr[j.time] = j.emptyNumber
           }
-      this.selectedStartTime = this.selectedEndTime = null 
+      if (arr[this.selectedStartTime] <= 0)
+        this.selectedStartTime = null
+      if (arr[this.selectedEndTime] <= 0)
+        this.selectedEndTime = null
       return arr
     }
   },
@@ -177,6 +188,41 @@ export default {
           });
         }
       );
+    },
+    random() {
+      function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array
+      }
+      let shuffle_room = shuffle(this.originalStudyRooms.slice())
+      for (let i of shuffle_room) {
+        let shuffle_t = shuffle(i.book.slice())
+        for (let j of shuffle_t)
+          if (j.emptyNumber) {
+            this.selectedBuilding = i.buildingNumber
+            this.selectedClassroom = i.classRoomNumber
+            this.selectedStartTime = j.time
+            this.selectedEndTime = j.time
+            return
+          }
+      }
+      alert('没有找到能够预约的自习室！')
+    },
+    quick() {
+      let current = parseInt(new Date().getHours())
+      for (let i of this.originalStudyRooms)
+        for (let j of i.book)
+          if (j.time == current) {
+            this.selectedBuilding = i.buildingNumber
+            this.selectedClassroom = i.classRoomNumber
+            this.selectedStartTime = j.time
+            this.selectedEndTime = j.time
+            return
+          }
+      alert('没有找到当前时间能够预约的自习室！')
     },
   },
 
