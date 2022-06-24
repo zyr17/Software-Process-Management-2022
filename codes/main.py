@@ -1,7 +1,10 @@
 from fastapi import FastAPI
-from fastapi.testclient import TestClient
+import apis.account
+
 
 app = FastAPI()
+app.include_router(apis.account.router)
+
 
 @app.get('/')
 def mainpage():
