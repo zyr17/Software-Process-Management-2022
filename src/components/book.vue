@@ -8,27 +8,41 @@
       <p>你已经预约了自习室！点击签到查看详情。</p>
     </div>
     <div v-else>
-      <p>预约教室：{{ booking.buildingNumber }} {{ booking.classRoomNumber }}</p>
-      <p>座位号：{{ booking.seatNumber }}</p>
-      <p>预约时间：{{ booking.bookTime }}</p>
 
-      <form v-on:submit.prevent="checkin">
-        <div class="form-group">
-          <label name="current_position">当前地理位置</label>
-          <input
-            type="text"
-            class="form-control"
-            v-model="current_position"
-            id="current_position"
-            required
-          />
-        </div>
+      <div>
+        <el-select v-model="selectedBuilding" placeholder="选择楼栋">
+          <el-option v-for="i in buildingList" :key="i" :label="i" :value="i"></el-option>
+        </el-select>
+      </div>
 
-        <div class="form-group">
-          <button class="btn btn-success">签到</button>
-        </div>
-      </form>
-      <button @click="cancel" class="btn btn-danger">取消预定</button>
+      <div>
+        <el-select v-model="selectedClassroom" placeholder="选择教室">
+          <el-option v-for="i in classRoomList" :key="i" :label="i" :value="i"></el-option>
+        </el-select>
+      </div>
+
+      <div>
+        <el-select v-model="selectedStartTime" placeholder="选择预约起始时间">
+          <el-option v-for="i, v in availableSeatList" v-if="i != -1"
+            :key="v"
+            :label="(v < 10 ? '0' : '') + v + ':00 余' + i + '人'"
+            :value="v"
+            :disabled="i <= 0"
+          ></el-option>
+        </el-select>
+        <el-select v-model="selectedEndTime" placeholder="选择预约结束时间">
+          <el-option v-for="i, v in availableSeatList" v-if="i != -1"
+            :key="v"
+            :label="(v < 9 ? '0' : '') + (v + 1) + ':00 余' + i + '人'"
+            :value="v"
+            :disabled="i <= 0"
+          ></el-option>
+        </el-select>
+      </div>
+
+      <div class="form-group">
+        <button class="btn btn-success">预定</button>
+      </div>
     </div>
       
   </div>
@@ -43,21 +57,91 @@ import { backend_link } from "../const.vue";
 export default {
   data() {
     return {
-      booking: {
-        id: 1,
-        buildingNumber: 'JB',
-        classRoomNumber: '101',
-        seatNumber: '25',
-        bookTime: '2022-06-01 14:00',
-        checkinTime: '-',
-        status: 'booking',
-      },
-      is_booked: false,
-      notifications: [],
-      current_position: '',
+      originalStudyRooms: [
+        {
+          id: 1,
+          buildingNumber: 'JB',
+          classRoomNumber: 'JB101',
+          startTime: 18,
+          endTime: 22,
+          seatNumber: 1,
+          book: [
+            { time: 18, emptyNumber: 1 },
+            { time: 19, emptyNumber: 1 },
+            { time: 20, emptyNumber: 0 },
+            { time: 21, emptyNumber: 0 },
+            { time: 22, emptyNumber: 1 },
+          ]
+        },
+        {
+          id: 1,
+          buildingNumber: 'JB',
+          classRoomNumber: 'JB102',
+          startTime: 6,
+          endTime: 9,
+          seatNumber: 1,
+          book: [
+            { time: 6, emptyNumber: 1 },
+            { time: 7, emptyNumber: 1 },
+            { time: 8, emptyNumber: 0 },
+            { time: 9, emptyNumber: 1 },
+          ]
+        },
+        {
+          id: 2,
+          buildingNumber: 'JA',
+          classRoomNumber: 'JA202',
+          startTime: 10,
+          endTime: 12,
+          seatNumber: 2,
+          book: [
+            { time: 10, emptyNumber: 2 },
+            { time: 11, emptyNumber: 1 },
+            { time: 12, emptyNumber: 0 },
+          ]
+        }
+      ],
+      selectedBuilding: '',
+      selectedClassroom: '',
+      selectedStartTime: null,
+      selectedEndTime: null,
     };
   },
-  
+
+  computed: {
+    buildingList () {
+      let arr = [];
+      for (let i of this.originalStudyRooms)
+        arr.push(i.buildingNumber)
+      arr = Array.from(new Set(arr))
+      arr.sort()
+      return arr
+    },
+    classRoomList () {
+      let arr = [];
+      for (let i of this.originalStudyRooms)
+        if (i.buildingNumber == this.selectedBuilding)
+          arr.push(i.classRoomNumber)
+      arr = Array.from(new Set(arr))
+      arr.sort()
+      this.selectedClassroom = ''
+      return arr
+    },
+    availableSeatList () {
+      let arr = []
+      for (let i of this.originalStudyRooms)
+        if (i.buildingNumber == this.selectedBuilding)
+          if (i.classRoomNumber == this.selectedClassroom) {
+            for (let j = 0; j < 24; j ++ )
+              arr.push(-1)
+            for (let j of i.book)
+              arr[j.time] = j.emptyNumber
+          }
+      this.selectedStartTime = this.selectedEndTime = null 
+      return arr
+    }
+  },
+
   created: function () {
     this.$http.get(backend_link + 'current_booking').then(
       (response) => {
@@ -69,9 +153,14 @@ export default {
   },
 
   methods: {
-    checkin () {
-      this.$http.post(backend_link + "current_booking", {
-        position: this.current_position
+    
+    book () {
+      this.$http.post(backend_link + "book", {
+        auth: '',
+        buildingNumber: this.selectedBuilding,
+        classRoomNumber: this.selectedClassroom,
+        startTime: this.selectedStartTime,
+        endTime: this.selectedEndTime
       }, {
         headers: {
           "Content-Type": "application/json",
@@ -79,35 +168,16 @@ export default {
       })
       .then(
         (response) => {
-          this.$router.push({ name: "history" });
+          this.$router.push({ name: "checkin" });
         },
         (response) => {
           this.notifications.push({
             type: "danger",
-            message: "签到失败 " + JSON.stringify(response),
+            message: "预约失败 " + JSON.stringify(response),
           });
         }
       );
     },
-    cancel () {
-      this.$http
-        .delete(backend_link + "current_booking", {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-        .then(
-          (response) => {
-            this.$router.push({ name: "history" });
-          },
-          (response) => {
-            this.notifications.push({
-              type: "danger",
-              message: "取消失败",
-            });
-          }
-        );
-    }
   },
 
   components: {

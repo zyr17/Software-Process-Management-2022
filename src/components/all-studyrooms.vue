@@ -23,6 +23,7 @@
           <td>ID</td>
           <td>楼栋信息</td>
           <td>自习室信息</td>
+          <td>座位数</td>
           <td>可预约时间</td>
         </tr>
       </thead>
@@ -32,6 +33,7 @@
           <td>{{ studyRoom.id }}</td>
           <td>{{ studyRoom.buildingNumber }}</td>
           <td>{{ studyRoom.classRoomNumber }}</td>
+          <td>{{ studyRoom.seatNumber }}</td>
           <td>{{ to_time(studyRoom.startTime) }}-{{ to_time(studyRoom.endTime) }}</td>
           <td>
             <router-link
@@ -59,8 +61,16 @@ export default {
           id: 1,
           buildingNumber: 'JB',
           classRoomNumber: 'JB101',
-          startTime: 8,
+          startTime: 18,
           endTime: 22,
+          seatNumber: 1,
+          book: [
+            { time: 18, emptyNumber: 1 },
+            { time: 19, emptyNumber: 1 },
+            { time: 20, emptyNumber: 0 },
+            { time: 21, emptyNumber: 0 },
+            { time: 22, emptyNumber: 1 },
+          ]
         },
         {
           id: 2,
@@ -68,6 +78,12 @@ export default {
           classRoomNumber: 'JA202',
           startTime: 10,
           endTime: 12,
+          seatNumber: 2,
+          book: [
+            { time: 10, emptyNumber: 2 },
+            { time: 11, emptyNumber: 1 },
+            { time: 12, emptyNumber: 0 },
+          ]
         }
       ],
       studyRoomsSearch: "",

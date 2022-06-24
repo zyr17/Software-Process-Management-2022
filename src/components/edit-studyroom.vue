@@ -45,6 +45,17 @@
       </div>
 
       <div class="form-group">
+        <label name="studyroom_seatnumber">自习室座位数</label>
+        <input
+          type="text"
+          class="form-control"
+          v-model="studyroom.seatNumber"
+          id="studyroom_seatnumber"
+          required
+        />
+      </div>
+
+      <div class="form-group">
         <label name="studyroom_starttime">可预约开始时间</label>
         <el-select v-model="studyroom.startTime" placeholder="请选择">
           <el-option
