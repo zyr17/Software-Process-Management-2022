@@ -46,24 +46,35 @@
 
       <div class="form-group">
         <label name="studyroom_starttime">可预约开始时间</label>
+        <el-select v-model="studyroom.startTime" placeholder="请选择">
+          <el-option
+            v-for="i in 24" :key="i"
+            :label="(i <= 10 ? '0' : '') + (i - 1) + ':00'"
+            :value="i - 1"
+          >
+          </el-option>
+        </el-select>
+
+        <!-- <label name="studyroom_starttime">可预约开始时间</label>
         <input
           type="text"
           class="form-control"
           v-model="studyroom.startTime"
           id="studyroom_starttime"
           required
-        />
+        /> -->
       </div>
 
       <div class="form-group">
-        <label name="studyroom_endtime">可预约结束时间</label>
-        <input
-          type="text"
-          class="form-control"
-          v-model="studyroom.endTime"
-          id="studyroom_endtime"
-          required
-        />
+        <label name="studyroom_starttime">可预约结束时间</label>
+        <el-select v-model="studyroom.endTime" placeholder="请选择">
+          <el-option
+            v-for="i in 24" :key="i"
+            :label="(i <= 10 ? '0' : '') + (i - 1) + ':00'"
+            :value="i - 1"
+          >
+          </el-option>
+        </el-select>
       </div>
 
       <div class="form-group">
@@ -143,6 +154,8 @@ export default {
 
   components: {
     notification: Notification,
+    // ElSelect: ElSelect,
+    // ElOption: ElOption,
   },
 };
 </script>

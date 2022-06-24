@@ -6,6 +6,9 @@ Vue.use(VueRouter)
 import VueResource from 'vue-resource';
 Vue.use(VueResource);
 
+import ElementUI from 'element-ui';
+Vue.use(ElementUI)
+
 import App from './App.vue'
 
 const AllStudents = require('./components/all-students.vue');

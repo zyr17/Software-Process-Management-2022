@@ -32,7 +32,7 @@
           <td>{{ studyRoom.id }}</td>
           <td>{{ studyRoom.buildingNumber }}</td>
           <td>{{ studyRoom.classRoomNumber }}</td>
-          <td>{{ studyRoom.startTime }}-{{ studyRoom.endTime }}</td>
+          <td>{{ to_time(studyRoom.startTime) }}-{{ to_time(studyRoom.endTime) }}</td>
           <td>
             <router-link
               :to="{ name: 'edit_studyroom', params: { studyroom: studyRoom } }"
@@ -59,15 +59,15 @@ export default {
           id: 1,
           buildingNumber: 'JB',
           classRoomNumber: 'JB101',
-          startTime: '08:00',
-          endTime: '22:00',
+          startTime: 8,
+          endTime: 22,
         },
         {
           id: 2,
           buildingNumber: 'JA',
           classRoomNumber: 'JA202',
-          startTime: '10:30',
-          endTime: '12:00',
+          startTime: 10,
+          endTime: 12,
         }
       ],
       studyRoomsSearch: "",
@@ -106,6 +106,9 @@ export default {
           this.originalStudyRooms = response.data;
         }
       )
+    },
+    to_time(i) {
+      return (i < 10 ? '0' : '') + (i) + ':00';
     }
   },
 };
