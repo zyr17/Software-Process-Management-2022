@@ -1,10 +1,21 @@
 version: '3'
 
 services:
-  fastapi:
+
+  fastapi_test:
+    build: .
+    depends_on:
+      - redis
+    volumes:
+      - ./codes:/app
     restart: "no"
     command: "pytest"
 
-  redis:
+  redis_test:
+    image: redis:latest
+    restart: unless-stopped
     volumes:
       - ./redis/redis-test.conf:/redis/redis.conf
+    command: "redis-server /redis/redis.conf"
+
+
