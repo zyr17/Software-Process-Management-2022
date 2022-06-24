@@ -8,8 +8,9 @@
       <thead>
         <tr>
           <td>教室</td>
-          <td>座位号</td>
+          <!-- <td>座位号</td> -->
           <td>预定时间</td>
+          <td>自习时间</td>
           <td>签到时间</td>
           <td>状态</td>
           <td></td>
@@ -19,8 +20,9 @@
       <tbody>
         <tr v-for="history in histories">
           <td>{{ history.buildingNumber }} {{ history.classRoomNumber }}</td>
-          <td>{{ history.seatNumber }}</td>
+          <!-- <td>{{ history.seatNumber }}</td> -->
           <td>{{ history.bookTime }}</td>
+          <td>{{ to_time(history.startTime) }}-{{ to_time(history.endTime + 1) }}</td>
           <td>{{ history.checkinTime }}</td>
           <td>{{ statusName[history.status] }}</td>
           <td>
@@ -71,6 +73,8 @@ export default {
             classRoomNumber: '101',
             seatNumber: '25',
             bookTime: '2022-06-01 14:00',
+            startTime: 14,
+            endTime: 14,
             checkinTime: '-',
             status: 'booking',
           },
@@ -80,6 +84,8 @@ export default {
             classRoomNumber: '101',
             seatNumber: '25',
             bookTime: '2022-04-01 14:00',
+            startTime: 14,
+            endTime: 14,
             checkinTime: '2022-04-01 13:57',
             status: 'done',
           },
@@ -89,6 +95,8 @@ export default {
             classRoomNumber: '202',
             seatNumber: '5',
             bookTime: '2022-03-01 14:00',
+            startTime: 14,
+            endTime: 14,
             checkinTime: '-',
             status: 'cancelled',
           },
@@ -98,6 +106,8 @@ export default {
             classRoomNumber: '202',
             seatNumber: '5',
             bookTime: '2022-03-01 14:00',
+            startTime: 14,
+            endTime: 14,
             checkinTime: '-',
             status: 'failed',
           }
@@ -139,6 +149,9 @@ export default {
             });
           }
         );
+    },
+    to_time(i) {
+      return (i < 10 ? '0' : '') + (i) + ':00';
     }
   },
 

@@ -34,7 +34,7 @@
           <td>{{ studyRoom.buildingNumber }}</td>
           <td>{{ studyRoom.classRoomNumber }}</td>
           <td>{{ studyRoom.seatNumber }}</td>
-          <td>{{ to_time(studyRoom.startTime) }}-{{ to_time(studyRoom.endTime) }}</td>
+          <td>{{ to_time(studyRoom.startTime) }}-{{ to_time(studyRoom.endTime + 1) }}</td>
           <td>
             <router-link
               :to="{ name: 'edit_studyroom', params: { studyroom: studyRoom } }"

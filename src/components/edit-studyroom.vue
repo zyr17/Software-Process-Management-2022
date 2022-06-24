@@ -81,7 +81,7 @@
         <el-select v-model="studyroom.endTime" placeholder="请选择">
           <el-option
             v-for="i in 24" :key="i"
-            :label="(i <= 10 ? '0' : '') + (i - 1) + ':00'"
+            :label="(i <= 10 ? '0' : '') + (i) + ':00'"
             :value="i - 1"
           >
           </el-option>

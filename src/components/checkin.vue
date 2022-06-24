@@ -17,6 +17,7 @@
       <p>预约教室：{{ booking.buildingNumber }} {{ booking.classRoomNumber }}</p>
       <p>座位号：{{ booking.seatNumber }}</p>
       <p>预约时间：{{ booking.bookTime }}</p>
+      <p>自习时间：{{ to_time(booking.startTime) }}-{{ to_time(booking.endTime + 1) }}</p>
 
       <form v-on:submit.prevent="checkin">
         <div class="form-group">
@@ -25,7 +26,7 @@
             type="text"
             class="form-control"
             v-model="current_position"
-            placeholder="点击获取地理位置(未实现)"
+            placeholder="点击获取地理位置(未实现点击)"
             id="current_position"
             required
           />
@@ -59,6 +60,8 @@ export default {
         classRoomNumber: '101',
         seatNumber: '25',
         bookTime: '2022-06-01 14:00',
+        startTime: 14,
+        endTime: 15,
         checkinTime: '-',
         status: 'booking',
       },
@@ -117,6 +120,9 @@ export default {
             });
           }
         );
+    },
+    to_time(i) {
+      return (i < 10 ? '0' : '') + (i) + ':00';
     }
   },
 
