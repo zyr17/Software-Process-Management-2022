@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+
+  fastapi:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - redis
+    volumes:
+      - ./codes:/app
+    ports:
+      - "8090:8090"
+
+  redis:
+    image: redis:latest
+    restart: unless-stopped
+    volumes:
+      - ./redis:/redis
+    command: "redis-server /redis/redis.conf"
+

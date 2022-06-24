@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  fastapi:
+    restart: "no"
+    command: "pytest"
+
+  redis:
+    volumes:
+      - ./redis/redis-test.conf:/redis/redis.conf
