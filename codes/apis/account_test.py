@@ -291,7 +291,6 @@ def test_get_user_information():
 
 
 def test_get_all_user_information():
-    # TODO currently modify information will not expire available tokens.
     reset_db()
     add_admin_account()
 

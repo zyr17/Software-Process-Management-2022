@@ -336,6 +336,24 @@ class RedisDB:
         }
         return True, res
 
+    def get_all_studyrooms(self):
+        """
+        get all room information in a list, sorted with id
+
+        if success, return True, [ rooms (refer to self.get_studyroom) ... ]
+        if fail, return False, { error_msg: str }
+        """
+        res = []
+        keys = self.conn.keys('room:id:*')
+        ids = [int(x.replace('room:id:', '')) for x in keys]
+        for id in ids:
+            resp, info = self.get_studyroom(id)
+            if not resp:
+                return resp, info
+            res.append(info)
+        res.sort(key = lambda x: x['id'])
+        return True, res
+
     def modify_studyroom(
             self, id: int, buildingNumber: Optional[str], 
             classRoomNumber: Optional[str], seatNumber: Optional[int], 

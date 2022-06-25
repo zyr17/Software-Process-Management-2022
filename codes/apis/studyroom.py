@@ -48,6 +48,18 @@ def get_studyroom(id: int, auth_token: str = Header()):
     return info
 
 
+@router.get('/studyroom')
+def get_all_studyrooms(auth_token: str = Header()):
+    check_auth_token(auth_token, False)
+    resp, info = db.get_all_studyrooms()
+    if not resp:
+        raise HTTPException(
+            status_code = 403,
+            detail = info
+        )
+    return info
+
+
 class modify_studyroom_post(BaseModel):
     buildingNumber: Optional[str]
     classRoomNumber: Optional[str]

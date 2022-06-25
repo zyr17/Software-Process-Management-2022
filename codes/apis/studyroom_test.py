@@ -260,9 +260,9 @@ def test_get_studyroom_information():
     room1 = {
         'buildingNumber': 'building2',
         'classRoomNumber': 'room2',
-        'seatNumber': 1,
-        'startTime': 8,
-        'endTime': 20
+        'seatNumber': 2,
+        'startTime': 18,
+        'endTime': 22
     }
 
     resp = client.post('/studyroom', json = room0, 
@@ -303,10 +303,78 @@ def test_get_studyroom_information():
     resp = client.get('/studyroom/hahaha', headers = token2header(admin_token))
     assert resp.status_code == 422, resp.json()
 
-    # use stu1 token get, should same
+    # use user token, should same
+    resp = client.get('/studyroom/0', headers = token2header(user_token))
+    assert resp.status_code == 200, resp.json()
+    assert resp.json() == room0_out
     resp = client.get('/studyroom/1', headers = token2header(user_token))
     assert resp.status_code == 200, resp.json()
     assert resp.json() == room1_out
+
+
+def test_get_all_studyroom_information():
+    reset_db()
+    add_admin_account()
+    add_student_account('stu', 'pass', '')
+    admin_token = get_token(client)
+    user_token = get_token(client, 'stu', 'pass')
+
+    rooms = [
+        {
+            'buildingNumber': 'building1',
+            'classRoomNumber': 'room1',
+            'seatNumber': 1,
+            'startTime': 8,
+            'endTime': 20
+        },
+        {
+            'buildingNumber': 'building2',
+            'classRoomNumber': 'room2',
+            'seatNumber': 2,
+            'startTime': 18,
+            'endTime': 22
+        },
+        {
+            'buildingNumber': 'building1',
+            'classRoomNumber': 'room2',
+            'seatNumber': 10,
+            'startTime': 6,
+            'endTime': 23
+        },
+    ]
+    rooms_out = [x.copy() for x in rooms]
+    for num, room in enumerate(rooms_out):
+        room['book'] = [
+            { 'time': x, 'emptyNumber': room['seatNumber']}
+            for x in range(room['startTime'], room['endTime'] + 1)
+        ]
+        room['id'] = num
+    rooms_current = []
+
+    # without auth, 422
+    resp = client.get('/studyroom')
+    assert resp.status_code == 422, resp.json()
+
+    # all auth can get result
+    resp = client.get('/studyroom', headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+    assert resp.json() == rooms_current
+    resp = client.get('/studyroom', headers = token2header(user_token))
+    assert resp.status_code == 200, resp.json()
+    assert resp.json() == rooms_current
+
+    # add room and check
+    for room, room_out in zip(rooms, rooms_out):
+        resp = client.post('/studyroom', json = room,
+                           headers = token2header(admin_token))
+        assert resp.status_code == 200, resp.json()
+        rooms_current.append(room_out)
+        resp = client.get('/studyroom', headers = token2header(admin_token))
+        assert resp.status_code == 200, resp.json()
+        assert resp.json() == rooms_current
+        resp = client.get('/studyroom', headers = token2header(user_token))
+        assert resp.status_code == 200, resp.json()
+        assert resp.json() == rooms_current
 
 
 def test_modify_studyroom():
