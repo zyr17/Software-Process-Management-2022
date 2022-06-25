@@ -53,3 +53,37 @@ def check_auth_token_page(data: check_auth_get, auth_token: str = Header()):
     """
     check_auth_token(auth_token, data.is_admin, data.id)
     return {}
+
+
+class register_user_post(BaseModel):
+    name: str
+    password: str
+    stuNum: str
+
+
+@router.post('/user')
+def register_user(data: register_user_post):
+    resp, info = db.create_user(data.name, data.password, data.stuNum, 
+                                role = 'user')
+    if not resp:
+        raise HTTPException(
+            status_code = 403,
+            detail = info
+        )
+    return {}
+
+
+class modify_user_put(BaseModel):
+    id: int
+    stuNum: Optional[str]
+    name: Optional[str]
+    currentPassword: Optional[str]
+    newPassword: Optional[str]
+
+
+@router.put('/user')
+def modify_user(data: modify_user_put, auth_token: Optional[str] = Header()):
+    raise HTTPException(
+        status_code = 403,
+        detail = { 'error_msg': 'Not Implemented' }
+    )

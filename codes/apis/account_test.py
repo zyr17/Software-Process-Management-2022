@@ -121,3 +121,71 @@ def test_student_login_and_auth_token():
                                                     'id': 1 }, 
                       headers = { 'Auth-Token': token })
     assert resp.status_code == 200, resp.json()
+
+
+def test_student_register_and_login():
+    pytest_utils.reset_db()
+    pytest_utils.add_admin_account()
+
+    # register a student with insufficient information, 422
+    resp = client.post('/user', json = {
+        'name': 'stu1',
+        'password': 'password'
+    })
+    assert resp.status_code == 422, resp.json()
+    resp = client.post('/user', json = {
+        'password': 'password',
+        'stuNum': '1'
+    })
+    assert resp.status_code == 422, resp.json()
+    resp = client.post('/user', json = {
+        'name': 'stu1',
+        'stuNum': '1'
+    })
+    assert resp.status_code == 422, resp.json()
+
+    # username or password empty, 403
+    resp = client.post('/user', json = {
+        'name': '',
+        'password': 'password',
+        'stuNum': '1'
+    })
+    assert resp.status_code == 403, resp.json()
+    resp = client.post('/user', json = {
+        'name': 'stu1',
+        'password': '',
+        'stuNum': '1'
+    })
+    assert resp.status_code == 403, resp.json()
+
+    # success register
+    resp = client.post('/user', json = {
+        'name': 'stu1',
+        'password': 'password',
+        'stuNum': '1'
+    })
+    assert resp.status_code == 200, resp.json()
+
+    # success register with empty stuNum
+    resp = client.post('/user', json = {
+        'name': 'stu2',
+        'password': 'password2',
+        'stuNum': ''
+    })
+    assert resp.status_code == 200, resp.json()
+
+    # exist username, 403
+    resp = client.post('/user', json = {
+        'name': 'stu1',
+        'password': 'password3',
+        'stuNum': '1'
+    })
+    assert resp.status_code == 403, resp.json()
+
+    # exist password and stuNum, 200
+    resp = client.post('/user', json = {
+        'name': 'stu3',
+        'password': 'password',
+        'stuNum': '1'
+    })
+    assert resp.status_code == 200, resp.json()

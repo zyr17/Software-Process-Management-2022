@@ -80,6 +80,9 @@ class RedisDB:
         if self.conn.get(f'account:name:{name}') is not None:
             return False, { 'error_msg': 'duplicate username' }
 
+        if len(name) == 0 or len(password) == 0:
+            return False, { 'error_msg': 'name or password empty' }
+
         id = int(self.conn.get('account:counter'))
         self.conn.incr('account:counter')
         self.conn.set(f'account:name:{name}', id)
