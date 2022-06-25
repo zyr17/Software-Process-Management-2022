@@ -116,12 +116,13 @@ class RedisDB:
         token = ''
         for i in range(64):
             token = token + allchar[random.randint(0, len(allchar) - 1)]
+        expire_time = int(time.time()) + valid_second
         self.conn.hset(f'authtoken:{token}', mapping = {
-            'time': int(time.time()) + valid_second,
+            'time': expire_time,
             'id': id,
         })
         role = self.conn.hget(f'account:id:{id}', 'role')
-        return True, { 'auth': token, 'role': role }
+        return True, { 'auth': token, 'role': role, 'expire': expire_time }
 
     def check_auth_token(self, token: str):
         """
