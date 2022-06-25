@@ -2,7 +2,7 @@ version: '3'
 
 services:
 
-  fastapi_test:
+  fastapi:
     build: .
     depends_on:
       - redis
@@ -11,7 +11,7 @@ services:
     restart: "no"
     command: "pytest"
 
-  redis_test:
+  redis:
     image: redis:latest
     restart: unless-stopped
     volumes:
