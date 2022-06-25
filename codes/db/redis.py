@@ -387,7 +387,7 @@ class RedisDB:
             buildingNumber, classRoomNumber, seatNumber, startTime, endTime
         )
         if not checkres:
-            return False, info
+            return False, checkinfo
         self.conn.delete(
             f'room:name:{info["buildingNumber"]}:{info["classRoomNumber"]}')
         self.conn.set(f'room:name:{buildingNumber}:{classRoomNumber}', id)
