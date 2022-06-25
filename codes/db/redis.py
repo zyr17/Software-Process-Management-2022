@@ -203,3 +203,21 @@ class RedisDB:
             'stuNum': info['stuNum'],
             'role': info['role'],
         }
+
+    def get_all_users(self):
+        """
+        get all user information in a list, sorted with id
+
+        if success, return True, [ users (refer to self.get_user) ... ]
+        if fail, return False, { error_msg: str }
+        """
+        res = []
+        keys = self.conn.keys('account:id:*')
+        ids = [int(x.replace('account:id:', '')) for x in keys]
+        for id in ids:
+            resp, info = self.get_user(id)
+            if not resp:
+                return resp, info
+            res.append(info)
+        res.sort(key = lambda x: x['id'])
+        return True, res

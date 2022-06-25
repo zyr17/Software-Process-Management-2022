@@ -119,3 +119,15 @@ def get_user(id: int, auth_token: Optional[str] = Header()):
             detail = info
         )
     return info
+
+
+@router.get('/user')
+def get_all_user(auth_token: Optional[str] = Header()):
+    check_auth_token(auth_token, True)
+    resp, info = db.get_all_users()
+    if not resp:
+        raise HTTPException(
+            status_code = 403,
+            detail = info
+        )
+    return info

@@ -67,9 +67,21 @@ def test_admin_login_and_auth_token():
     assert resp.status_code == 200, resp.json()
     assert resp.json()['role'] == 'admin'
     token = resp.json()['auth']
-
     # sleep 2s, so token must expire and 401
     time.sleep(2)
+    resp = client.get('/check_auth_token', json = { 'is_admin': True }, 
+                      headers = { 'Auth-Token': token })
+    assert resp.status_code == 401, resp.json()
+
+    # test big minus token, can generate but cannot use
+    resp = client.post('/login', json = { 
+        'name': 'admin', 
+        'password': 'password',
+        'token_valid_time': -1000000000000000
+    })
+    assert resp.status_code == 200, resp.json()
+    assert resp.json()['role'] == 'admin'
+    token = resp.json()['auth']
     resp = client.get('/check_auth_token', json = { 'is_admin': True }, 
                       headers = { 'Auth-Token': token })
     assert resp.status_code == 401, resp.json()
@@ -270,6 +282,50 @@ def test_get_user_information():
     }
     # use stu1 token get stu2, 401
     resp = client.get('/user/2', headers = token2header(stu1_token))
+    assert resp.status_code == 401, resp.json()
+
+
+def test_get_all_user_information():
+    # TODO currently modify information will not expire available tokens.
+    reset_db()
+    add_admin_account()
+
+    admin_token = get_token(client, 'admin', 'password')
+
+    admin_info = { 'id': 0, 'stuNum': '0', 'name': 'admin', 'role': 'admin' }
+    stu_infos = [
+        { 'id': 1, 'password': 'pass1', 'stuNum': 'num1', 
+          'name': 'stu1', 'role': 'user' },
+        { 'id': 2, 'password': 'pass2', 'stuNum': '', 
+          'name': 'stu2', 'role': 'user' },
+        { 'id': 3, 'password': 'pass3', 'stuNum': '333', 
+          'name': 'ssssttu3', 'role': 'user' },
+    ]
+    current_infos = [admin_info]
+
+    # without auth, 422
+    resp = client.get('/user')
+    assert resp.status_code == 422, resp.json()
+
+    # admin auth
+    resp = client.get('/user', headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+    assert resp.json() == current_infos
+
+    # add account and check
+    for stu in stu_infos:
+        add_student_account(stu['name'], stu['password'], stu['stuNum'])
+        stu = stu.copy()
+        del stu['password']
+        current_infos.append(stu)
+        resp = client.get('/user', headers = token2header(admin_token))
+        assert resp.status_code == 200, resp.json()
+        assert resp.json() == current_infos
+
+    # with user token, 401
+    user_token = get_token(client, stu_infos[0]['name'], 
+                           stu_infos[0]['password'])
+    resp = client.get('/user', headers = token2header(user_token))
     assert resp.status_code == 401, resp.json()
 
 
