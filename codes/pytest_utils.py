@@ -21,15 +21,8 @@ def add_student_account(name, password, stuNum):
     assert resp, info
 
 
-def get_header(auth: Optional[str] = None):
-    header = { 'Content-Type': 'application/json' }
-    if auth is not None:
-        header['Auth-Token'] = auth
-    return header
-
-
-def get_token(client, name, password):
-    # get admin token
+def get_token(client, name: str = 'admin', password: str = 'password'):
+    # get token, default admin token
     resp = client.post('/login', json = { 
         'name': name, 
         'password': password,
@@ -40,4 +33,4 @@ def get_token(client, name, password):
 
 
 def token2header(token: str):
-    return { 'Auth-Token': token }
+    return { 'Content-Type': 'application/json', 'Auth-Token': token }

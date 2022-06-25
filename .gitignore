@@ -1,2 +1,4 @@
 redis/dump.rdb
 __pycache__/
+.coverage
+htmlcov

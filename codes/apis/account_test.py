@@ -86,6 +86,11 @@ def test_admin_login_and_auth_token():
                       headers = { 'Auth-Token': token })
     assert resp.status_code == 401, resp.json()
 
+    # not exist token, 401
+    resp = client.get('/check_auth_token', json = { 'is_admin': True }, 
+                      headers = { 'Auth-Token': 'not-exist' })
+    assert resp.status_code == 401, resp.json()
+
 
 def test_student_login_and_auth_token():
     reset_db()
@@ -354,7 +359,7 @@ def test_modify_user():
     assert client.get('/user/2', headers = token2header(admin_token)).json() \
            == stu2_info
 
-    # user change self without pass wrong pass, 401
+    # user change self without pass or wrong pass, 401
     resp = client.put('/user/2', json = {
         'name': 'mod2',
         'stuNum': 'mod2',
@@ -407,6 +412,28 @@ def test_modify_user():
     resp = client.post('/login', json = { 'name': 'stu1', 'password': 'mod1' })
     assert resp.status_code == 200, resp.json()
 
+    # change with empty username or password, 403
+    resp = client.put('/user/2', json = {
+        'name': '',
+        'stuNum': 'mod2',
+        'newPassword': 'mod2'
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 403, resp.json()
+    resp = client.put('/user/2', json = {
+        'name': 'mod2',
+        'stuNum': 'mod2',
+        'newPassword': ''
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 403, resp.json()
+
+    # admin change not exist user, 403
+    resp = client.put('/user/200', json = {
+        'name': 'mod200',
+        'stuNum': 'mod200',
+        'newPassword': 'mod200'
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 403, resp.json()
+
     # admin change its information without password
     resp = client.put('/user/0', json = {
         'stuNum': 'mod0',
@@ -421,12 +448,23 @@ def test_modify_user():
 
     # admin change others without password
     resp = client.put('/user/1', json = {
-        'stuNum': 'modx',
+        'stuNum': '',
         'newPassword': 'modx'
     }, headers = token2header(admin_token))
     assert resp.status_code == 200, resp.json()
     assert client.get('/user/1', headers = token2header(admin_token)).json() \
-           == { 'id': 1, 'name': 'stu1', 'stuNum': 'modx', 'role': 'user' }
+           == { 'id': 1, 'name': 'stu1', 'stuNum': '', 'role': 'user' }
     resp = client.post('/login', json = { 'name': 'stu1', 
+                                          'password': 'modx' })
+    assert resp.status_code == 200, resp.json()
+
+    # admin only change others username
+    resp = client.put('/user/1', json = {
+        'name': 'modx',
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+    assert client.get('/user/1', headers = token2header(admin_token)).json() \
+           == { 'id': 1, 'name': 'modx', 'stuNum': '', 'role': 'user' }
+    resp = client.post('/login', json = { 'name': 'modx', 
                                           'password': 'modx' })
     assert resp.status_code == 200, resp.json()
