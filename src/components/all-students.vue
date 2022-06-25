@@ -1,6 +1,6 @@
 <template>
   <div id="all_students">
-    <h1>学生管理</h1>
+    <h1>用户管理</h1>
 
     <!-- <p>
       <router-link :to="{ name: 'edit_student' }" class="btn btn-primary"
@@ -12,7 +12,7 @@
         type="text"
         name="search"
         v-model="studentSearch"
-        placeholder="根据姓名搜索"
+        placeholder="根据用户名搜索"
         class="form-control"
       />
     </div>
@@ -22,7 +22,8 @@
         <tr>
           <td>ID</td>
           <td>学号</td>
-          <td>姓名</td>
+          <td>用户名</td>
+          <td>角色</td>
           <td>操作</td>
         </tr>
       </thead>
@@ -32,6 +33,7 @@
           <td>{{ student.id }}</td>
           <td>{{ student.stuNum }}</td>
           <td>{{ student.name }}</td>
+          <td>{{ role2name(student.role) }}</td>
           <td>
             <router-link
               :to="{ name: 'edit_student', params: { stu: student } }"
@@ -53,21 +55,24 @@
 <script>
 
 import { backend_link } from "../const.vue"
+import store from '../store'
 
 export default {
   data() {
     return {
       originalStudents: [
-        {
-          id: 1,
-          stuNum: 123456,
-          name: 'zhangsan'
-        },
-        {
-          id: 2,
-          stuNum: 654321,
-          name: 'lisi'
-        }
+        // {
+        //   id: 1,
+        //   stuNum: 123456,
+        //   name: 'zhangsan',
+        //   role: 'admin'
+        // },
+        // {
+        //   id: 2,
+        //   stuNum: 654321,
+        //   name: 'lisi',
+        //   role: 'user'
+        // }
       ],
       studentSearch: "",
     };
@@ -96,7 +101,11 @@ export default {
 
   methods: {
     fetchStudentData: function () {
-      this.$http.get(backend_link + "student").then(
+      this.$http.get(backend_link + "user", {
+        headers: {
+          "Auth-Token": store.state.auth
+        }
+      }).then(
         (response) => {
           this.originalStudents = response.body;
         },
@@ -105,9 +114,9 @@ export default {
     },
     deleteStudent: function () {
       this.$http
-        .delete(backend_link + "student/" + this.student.stuNum, {
+        .delete(backend_link + "user/" + this.student.stuNum, {
           headers: {
-            "Content-Type": "application/json",
+            "Auth-Token": store.state.auth
           },
         })
         .then(
@@ -121,6 +130,12 @@ export default {
             });
           }
         );
+    },
+    role2name: function (role) {
+      return {
+        'admin': '管理员',
+        'user': '普通用户'
+      }[role]
     }
   },
 };

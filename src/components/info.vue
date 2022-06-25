@@ -34,7 +34,7 @@
       </div>
 
       <div class="form-group">
-        <label name="student_name">姓名</label>
+        <label name="student_name">用户名</label>
         <input
           type="text"
           class="form-control"
@@ -49,7 +49,7 @@
         <input
           type="password"
           class="form-control"
-          v-model="student.current_password"
+          v-model="student.currentPassword"
           id="current_password"
           required
         />
@@ -60,7 +60,7 @@
         <input
           type="password"
           class="form-control"
-          v-model="student.password"
+          v-model="student.newPassword"
           id="student_password"
         />
       </div>
@@ -97,6 +97,7 @@
 import Notification from "./notifications.vue";
 
 import { backend_link } from "../const.vue";
+import store from '../store';
 
 
 export default {
@@ -107,9 +108,25 @@ export default {
     };
   },
 
+  created: function () {
+    this.fetch_info();
+  },
+
   methods: {
+    fetch_info: function () {
+      this.$http.get(backend_link + "user/" + store.state.id, {
+        headers: {
+          "Auth-Token": store.state.auth
+        }
+      }).then(
+        (response) => {
+          this.student = response.body;
+        },
+        (response) => {}
+      );
+    },
     update_info: function () {
-      if (this.student.password != this.student.password2) {
+      if (this.student.newPassword != this.student.password2) {
         this.notifications.push({
           type: "error",
           message: "两次密码不一致",
@@ -117,9 +134,9 @@ export default {
         return;
       }
       this.$http
-        .put(backend_link + "student", this.student, {
+        .put(backend_link + "user/" + store.state.id, this.student, {
           headers: {
-            "Content-Type": "application/json",
+            'Auth-Token': store.state.auth
           },
         })
         .then(
@@ -128,11 +145,14 @@ export default {
               type: "success",
               message: "信息更新成功",
             });
+            setTimeout(() => {
+              this.$router.go(0)
+            }, 1000)
           },
           (response) => {
             this.notifications.push({
               type: "error",
-              message: "信息更新失败",
+              message: "信息更新失败" + JSON.stringify(response.body.detail),
             });
           }
         );

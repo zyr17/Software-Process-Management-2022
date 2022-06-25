@@ -50,6 +50,8 @@ export default {
   methods: {
     logout() {
       this.$store.commit('clearAuth');
+      localStorage.clear();
+      this.$router.push('/login')
     }
   },
   name: "app",

@@ -34,7 +34,7 @@
       </div>
 
       <div class="form-group">
-        <label name="student_name">姓名</label>
+        <label name="student_name">用户名</label>
         <input
           type="text"
           class="form-control"
@@ -119,11 +119,14 @@ export default {
               type: "success",
               message: "学生注册成功",
             });
+            setTimeout(() => {
+              this.$router.push('/login')
+            }, 1000)
           },
           (response) => {
             this.notifications.push({
               type: "error",
-              message: "学生注册失败 " + JSON.stringify(response),
+              message: "学生注册失败 " + response.body.detail.error_msg,
             });
           }
         );

@@ -77,24 +77,20 @@ export default {
               message: "登录成功",
             });
             store.commit('setAuth', response.body);
+            if (response.body.role == 'admin')
+              setTimeout(() => {
+                this.$router.push('/all_students')
+              }, 1000)
+            else if (response.body.role == 'user')
+              setTimeout(() => {
+                this.$router.push('/personal_info')
+              }, 1000)
           },
           (response) => {
-
-            // this.notifications.push({
-            //   type: "error",
-            //   message: "假装以管理员登录" + JSON.stringify(response),
-            // });
-            // store.commit('setAuth', {auth: '1', role: 'admin'});
-
             this.notifications.push({
               type: "error",
               message: "登录失败 " + response.body.detail.error_msg,
             });
-
-            // this.notifications.push({
-            //   type: "error",
-            //   message: "登录失败:" + JSON.stringify(response),
-            // });
           }
         );
     },

@@ -8,10 +8,24 @@ Vue.use(Vuex);
 export default new Vuex.Store({
   // 需要存储的值都放在这里面
   state() {
-    return {
-      auth: null,
-      role: 'none',
+    let res = {
+      auth: localStorage.getItem('auth'),
+      role: localStorage.getItem('role') || 'none',
+      expire: localStorage.getItem('expire') || 0,
+      name: localStorage.getItem('name'),
+      id: localStorage.getItem('id'),
     }
+    if (res.expire < (new Date()).getTime() / 1000) {
+      if (res.expire)
+        console.log('token expired')
+      let current_page = window.location.href
+      let mainpage = /https?:\/\/[^\/]*\//.exec(current_page)[0]
+      console.log(window.location.href, mainpage)
+      if (window.location.href != mainpage)
+        window.location.href = mainpage
+      res = { auth: null, role: 'none', expire: 0, name: null, id: null }
+    }
+    return res
   },
   // 在其他视图中通过 $store.commit('setState', 10) 使用，用于修改stor存的值
   mutations: {
@@ -20,6 +34,12 @@ export default new Vuex.Store({
       state.role = datajson.role;
       state.expire = datajson.expire;
       state.name = datajson.name;
+      state.id = datajson.id;
+      localStorage.setItem('auth', datajson.auth)
+      localStorage.setItem('role', datajson.role)
+      localStorage.setItem('expire', datajson.expire)
+      localStorage.setItem('name', datajson.name)
+      localStorage.setItem('id', datajson.id)
     },
     clearAuth(state) {
       state.auth = null;

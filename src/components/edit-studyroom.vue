@@ -11,8 +11,8 @@
     <notification v-bind:notifications="notifications"></notification>
 
     <form v-on:submit.prevent="editstudyroom">
-      <div class="form-group" style="display: none">
-        <label name="studyroom_id">ID</label>
+      <div class="form-group" style="display: inherit">
+        <label name="studyroom_id">ID (无法修改)</label>
         <input
           type="text"
           class="form-control"
@@ -81,7 +81,7 @@
         <el-select v-model="studyroom.endTime" placeholder="请选择">
           <el-option
             v-for="i in 24" :key="i"
-            :label="(i <= 10 ? '0' : '') + (i) + ':00'"
+            :label="(i < 10 ? '0' : '') + (i) + ':00'"
             :value="i - 1"
           >
           </el-option>
@@ -110,7 +110,8 @@
 <script>
 import Notification from "./notifications.vue";
 
-import backend_link from "../const.vue";
+import { backend_link } from "../const.vue";
+import store from '../store';
 
 export default {
   data() {
@@ -140,23 +141,37 @@ export default {
     },
 
     editstudyroom: function () {
-      this.$http
-        .put(backend_link + "studyroom", this.studyroom, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-        .then(
+      let promise = null
+      if (this.is_edit)
+        promise = this.$http
+          .put(backend_link + "studyroom/" + this.studyroom.id, this.studyroom, {
+            headers: {
+              'Auth-Token': store.state.auth
+            },
+          })
+      else
+        promise = this.$http
+          .post(backend_link + "studyroom", this.studyroom, {
+            headers: {
+              'Auth-Token': store.state.auth
+            },
+          })
+
+      promise.then(
           (response) => {
             this.notifications.push({
               type: "success",
               message: "自习室信息" + this.mode_str + "成功",
             });
+            setTimeout(() => {
+              this.$router.push('/all_studyrooms')
+            }, 1000)
           },
           (response) => {
             this.notifications.push({
               type: "error",
-              message: "自习室信息" + this.mode_str + "失败",
+              message: "自习室信息" + this.mode_str + "失败 " + 
+                       JSON.stringify(response.body.detail),
             });
           }
         );

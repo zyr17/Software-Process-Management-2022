@@ -1,11 +1,11 @@
 <template>
   <div id="edit-student">
-    <h1 v-if="is_edit">学生信息 {{ student.name }} 修改</h1>
-    <h1 v-else>学生信息添加</h1>
+    <h1 v-if="is_edit">用户 {{ student.name }} 信息修改</h1>
+    <h1 v-else>用户信息添加</h1>
 
     <p>
       <router-link :to="{ name: 'all_students' }"
-        >返回学生信息列表页面</router-link
+        >返回用户信息列表页面</router-link
       >
     </p>
 
@@ -35,7 +35,7 @@
       </div>
 
       <div class="form-group">
-        <label name="student_name">姓名</label>
+        <label name="student_name">用户名</label>
         <input
           type="text"
           class="form-control"
@@ -50,9 +50,8 @@
         <input
           type="password"
           class="form-control"
-          v-model="student.password"
+          v-model="student.newPassword"
           id="student_password"
-          required
         />
       </div>
 
@@ -77,7 +76,9 @@
 <script>
 import Notification from "./notifications.vue";
 
-import backend_link from "../const.vue";
+import { backend_link } from "../const.vue";
+
+import store from "../store";
 
 export default {
   data() {
@@ -108,22 +109,25 @@ export default {
 
     editStudent: function () {
       this.$http
-        .put(backend_link + "student", this.student, {
+        .put(backend_link + "user/" + this.student.id, this.student, {
           headers: {
-            "Content-Type": "application/json",
+            "Auth-Token": store.state.auth
           },
         })
         .then(
           (response) => {
             this.notifications.push({
               type: "success",
-              message: "学生信息" + this.mode_str + "成功",
+              message: "用户信息" + this.mode_str + "成功",
             });
+            setTimeout(() => {
+              this.$router.push('/all_students')
+            }, 1000)
           },
           (response) => {
             this.notifications.push({
               type: "error",
-              message: "学生信息" + this.mode_str + "失败",
+              message: "用户信息" + this.mode_str + "失败",
             });
           }
         );

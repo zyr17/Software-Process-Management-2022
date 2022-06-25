@@ -51,51 +51,48 @@
 
 <script>
 
-import backend_link from "../const.vue";
+import { backend_link } from "../const.vue";
+import store from '../store';
 
 export default {
   data() {
     return {
       originalStudyRooms: [
-        {
-          id: 1,
-          buildingNumber: 'JB',
-          classRoomNumber: 'JB101',
-          startTime: 18,
-          endTime: 22,
-          seatNumber: 1,
-          book: [
-            { time: 18, emptyNumber: 1 },
-            { time: 19, emptyNumber: 1 },
-            { time: 20, emptyNumber: 0 },
-            { time: 21, emptyNumber: 0 },
-            { time: 22, emptyNumber: 1 },
-          ]
-        },
-        {
-          id: 2,
-          buildingNumber: 'JA',
-          classRoomNumber: 'JA202',
-          startTime: 10,
-          endTime: 12,
-          seatNumber: 2,
-          book: [
-            { time: 10, emptyNumber: 2 },
-            { time: 11, emptyNumber: 1 },
-            { time: 12, emptyNumber: 0 },
-          ]
-        }
+        // {
+        //   id: 1,
+        //   buildingNumber: 'JB',
+        //   classRoomNumber: 'JB101',
+        //   startTime: 18,
+        //   endTime: 22,
+        //   seatNumber: 1,
+        //   book: [
+        //     { time: 18, emptyNumber: 1 },
+        //     { time: 19, emptyNumber: 1 },
+        //     { time: 20, emptyNumber: 0 },
+        //     { time: 21, emptyNumber: 0 },
+        //     { time: 22, emptyNumber: 1 },
+        //   ]
+        // },
+        // {
+        //   id: 2,
+        //   buildingNumber: 'JA',
+        //   classRoomNumber: 'JA202',
+        //   startTime: 10,
+        //   endTime: 12,
+        //   seatNumber: 2,
+        //   book: [
+        //     { time: 10, emptyNumber: 2 },
+        //     { time: 11, emptyNumber: 1 },
+        //     { time: 12, emptyNumber: 0 },
+        //   ]
+        // }
       ],
       studyRoomsSearch: "",
     };
   },
 
   created: function () {
-    this.$http.get(backend_link + 'studyroom', {}).then(
-      (response) => {
-        this.originalStudyRooms = response.data;
-      }
-    )
+    this.fetch_study_room()
   },
   
   computed: {
@@ -116,8 +113,24 @@ export default {
   },
 
   methods: {
+    fetch_study_room () {
+      this.$http.get(backend_link + 'studyroom', {
+        headers: {
+          'Auth-Token': store.state.auth
+        }
+      }).then(
+        (response) => {
+          this.originalStudyRooms = response.body;
+        },
+        (response) => {}
+      )
+    },
     del_room(room_id) {
-      this.$http.delete(backend_link + 'studyroom', { id: room_id }).then(
+      this.$http.delete(backend_link + 'studyroom/' + id, {
+        headers: {
+          'Auth-Token': store.state.auth
+        }
+      }).then(
         (response) => {
           this.originalStudyRooms = response.data;
         }
