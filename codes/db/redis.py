@@ -231,7 +231,29 @@ class RedisDB:
         """
         counter = self.conn.get('room:counter')
         if counter is None:
-            self.conn.set('room:counter', 0)
+            self.conn.set('room:counter', 0) 
+
+    def _studyroom_data_check(self, buildingNumber: str, classRoomNumber: str, 
+                              seatNumber: int, startTime: int, endTime: int):
+        """
+        check if studyroom data is valid, used in create and modify.
+        BASIC check, advanced rules such as seatNumber vs. current booking is
+        not implemented here.
+
+        if success, return True, {}
+        if fail, return False, { error_msg: str }
+        """
+        if len(buildingNumber) == 0 or len(classRoomNumber) == 0:
+            return False, { 'error_msg': 'building or classroom number empty' }
+        if ':' in buildingNumber or ':' in classRoomNumber:
+            return False, { 'error_msg': 'building or classroom has colon' }
+        if seatNumber <= 0:
+            return False, { 'error_msg': 'sear number not positive' }
+        if startTime < 0 or startTime > 23 or endTime < 0 or endTime > 23:
+            return False, { 'error_msg': 'start or end time not in range' }
+        if startTime > endTime:
+            return False, { 'error_msg': 'start time later than end time' }
+        return True, {}
 
     def create_studyroom(self, buildingNumber: str, classRoomNumber: str, 
                          seatNumber: int, startTime: int, endTime: int):
@@ -245,20 +267,107 @@ class RedisDB:
         if self.conn.get(
                 f'room:name:{buildingNumber}:{classRoomNumber}') is not None:
             return False, { 'error_msg': 'duplicate classroom' }
-
-        if len(buildingNumber) == 0 or len(classRoomNumber) == 0:
-            return False, { 'error_msg': 'building or classroom number empty' }
-        if ':' in buildingNumber or ':' in classRoomNumber:
-            return False, { 'error_msg': 'building or classroom has colon' }
-        if seatNumber <= 0:
-            return False, { 'error_msg': 'sear number not positive' }
-        if startTime < 0 or startTime > 23 or endTime < 0 or endTime > 23:
-            return False, { 'error_msg': 'start or end time not in range' }
-        if startTime > endTime:
-            return False, { 'error_msg': 'start time later than end time' }
+        checkres, info = self._studyroom_data_check(
+            buildingNumber, classRoomNumber, seatNumber, startTime, endTime
+        )
+        if not checkres:
+            return False, info
 
         id = int(self.conn.get('room:counter'))
         self.conn.incr('room:counter')
+        self.conn.set(f'room:name:{buildingNumber}:{classRoomNumber}', id)
+        self.conn.hset(f'room:id:{id}', mapping = {
+            'id': id,
+            'buildingNumber': buildingNumber,
+            'classRoomNumber': classRoomNumber,
+            'seatNumber': seatNumber,
+            'startTime': startTime,
+            'endTime': endTime,
+        })
+        return True, {}
+
+    def _studyroom_book_number(self, id: int):
+        """
+        get book number of studyroom.
+
+        if success, return True, [ { time: int, emptyNumber: int } ]
+        if fail, return False, { error_msg: str }
+        """
+        if len(self.conn.keys(f'room:id:{id}')) == 0:
+            return False, { 'error_msg': 'room id not exist' }
+        info = self.conn.hgetall(f'room:id:{id}')
+        res = []
+        for t in range(int(info['startTime']), int(info['endTime']) + 1):
+            one = { 'time': t, 'emptyNumber': int(info['seatNumber']) }
+            # TODO currently use maximum number, should minus booked number.
+            res.append(one)
+        return res
+
+    def get_studyroom(self, id: int):
+        """
+        get studyroom information.
+
+        if success, return True, {
+            id: int,
+            buildingNumber: str, 
+            classRoomNumber: str, 
+            searNumber: int, 
+            startTime: int, 
+            endTime: int,
+            book: [
+                { time: int, emptyNumber: int }
+            ]
+        }
+            here book contains emptyNumber of seats in this studyroom and time,
+            startTime <= time <= endTime.
+        if fail, return False, { error_msg: str }
+        """
+        if len(self.conn.keys(f'room:id:{id}')) == 0:
+            return False, { 'error_msg': 'room id not exist' }
+        info = self.conn.hgetall(f'room:id:{id}')
+        res = {
+            'id': int(info['id']),
+            'buildingNumber': info['buildingNumber'],
+            'classRoomNumber': info['classRoomNumber'],
+            'seatNumber': int(info['seatNumber']),
+            'startTime': int(info['startTime']),
+            'endTime': int(info['endTime']),
+            'book': self._studyroom_book_number(id)
+        }
+        return True, res
+
+    def modify_studyroom(
+            self, id: int, buildingNumber: Optional[str], 
+            classRoomNumber: Optional[str], seatNumber: Optional[int], 
+            startTime: Optional[int], endTime: Optional[int]):
+        """
+        modify studyroom information. if seatNumber is modified, will check
+        current available seat number not to be minus zero.
+
+        if success, return True, {}
+        if fail, return False, { error_msg: str }
+        """
+        if len(self.conn.keys(f'room:id:{id}')) == 0:
+            return False, { 'error_msg': 'room id not exist' }
+        info = self.conn.hgetall(f'room:id:{id}')
+        if buildingNumber is None:
+            buildingNumber = info['buildingNumber']
+        if classRoomNumber is None:
+            classRoomNumber = info['classRoomNumber']
+        if seatNumber is None:
+            seatNumber = int(info['seatNumber'])
+            # TODO: check seatNumber is big enough!
+        if startTime is None:
+            startTime = int(info['startTime'])
+        if endTime is None:
+            endTime = int(info['endTime'])
+        checkres, checkinfo = self._studyroom_data_check(
+            buildingNumber, classRoomNumber, seatNumber, startTime, endTime
+        )
+        if not checkres:
+            return False, info
+        self.conn.delete(
+            f'room:name:{info["buildingNumber"]}:{info["classRoomNumber"]}')
         self.conn.set(f'room:name:{buildingNumber}:{classRoomNumber}', id)
         self.conn.hset(f'room:id:{id}', mapping = {
             'id': id,
