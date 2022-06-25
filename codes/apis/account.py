@@ -74,16 +74,48 @@ def register_user(data: register_user_post):
 
 
 class modify_user_put(BaseModel):
-    id: int
     stuNum: Optional[str]
     name: Optional[str]
     currentPassword: Optional[str]
     newPassword: Optional[str]
 
 
-@router.put('/user')
-def modify_user(data: modify_user_put, auth_token: Optional[str] = Header()):
-    raise HTTPException(
-        status_code = 403,
-        detail = { 'error_msg': 'Not Implemented' }
-    )
+@router.put('/user/{id}')
+def modify_user(id: int, data: modify_user_put, 
+                auth_token: Optional[str] = Header()):
+    """
+    if auth role is user, current password is needed; if is admin, can change
+    without current password.
+    """
+    try:
+        check_auth_token(auth_token, need_admin = True)
+    except HTTPException:
+        # not admin token, need current password and id should match
+        check_auth_token(auth_token, False, id)
+        if data.currentPassword is None or \
+                not db.check_password(id, data.currentPassword)[0]:
+            raise HTTPException(
+                status_code = 401,
+                detail = { 'error_msg': 'current password check failed' }
+            )
+
+    resp, info = db.modify_user(id, data.name, data.newPassword, 
+                                data.stuNum)
+    if not resp:
+        raise HTTPException(
+            status_code = 403,
+            detail = info
+        )
+    return {}
+
+
+@router.get('/user/{id}')
+def get_user(id: int, auth_token: Optional[str] = Header()):
+    check_auth_token(auth_token, False, id)
+    resp, info = db.get_user(id)
+    if not resp:
+        raise HTTPException(
+            status_code = 403,
+            detail = info
+        )
+    return info

@@ -4,6 +4,7 @@ from dotenv import load_dotenv, find_dotenv
 import os
 from typing import Literal
 import random
+from typing import Optional
 
 
 load_dotenv(find_dotenv())
@@ -106,8 +107,8 @@ class RedisDB:
             time: expire unix time seconds
             id: corresponding user id for this token
 
-        if success, return True, { name: str, auth: str, role: str, 
-                                   expitr: int }
+        if success, return True, { id: int, name: str, auth: str, role: str, 
+                                   expire: int }
         if fail, return False, { error_msg: str }
         """
         id = self.conn.get(f'account:name:{name}')
@@ -126,8 +127,8 @@ class RedisDB:
             'id': id,
         })
         role = self.conn.hget(f'account:id:{id}', 'role')
-        return True, { 'name': name, 'auth': token, 'role': role, 
-                       'expire': expire_time }
+        return True, { 'id': int(id), 'name': name, 'auth': token, 
+                       'role': role, 'expire': expire_time }
 
     def check_auth_token(self, token: str):
         """
@@ -143,4 +144,62 @@ class RedisDB:
             return False, { 'error_msg': 'auth token expired' }
         id = info['id']
         role = self.conn.hget(f'account:id:{id}', 'role')
-        return True, { 'id': id, 'role': role }
+        return True, { 'id': int(id), 'role': role }
+
+    def check_password(self, id: int, password: str):
+        """
+        check password of specified id.
+
+        if success, return True, {}
+        if fail, return False, { error_msg: str }
+        """
+        if len(self.conn.keys(f'account:id:{id}')) == 0:
+            return False, { 'error_msg': 'account id not exist' }
+        p = self.conn.hget(f'account:id:{id}', 'password')
+        if password != p:
+            return False, { 'error_msg': 'wrong current password' }
+        return True, {}
+
+    def modify_user(self, id: int, name: Optional[str], 
+                    password: Optional[str], stuNum: Optional[str]):
+        """
+        modify user information.
+
+        if success, return True, {}
+        if fail, return False, { error_msg: str }
+        """
+        if len(self.conn.keys(f'account:id:{id}')) == 0:
+            return False, { 'error_msg': 'account id not exist' }
+
+        info = self.conn.hgetall(f'account:id:{id}')
+        self.conn.delete(f'account:name:{info["name"]}')
+        if name is not None:
+            info['name'] = name
+        if password is not None:
+            info['password'] = password
+        if stuNum is not None:
+            info['stuNum'] = stuNum
+        if len(info['name']) == 0 or len(info['password']) == 0:
+            return False, { 'error_msg': 'name or password empty' }
+        self.conn.hset(f'account:id:{id}', mapping = info)
+        self.conn.set(f'account:name:{info["name"]}', id)
+
+        return True, {}
+
+    def get_user(self, id: int):
+        """
+        get information of one user
+
+        if success, return True, { id: int, name: str, stuNum: str, role: str }
+        if fail, return False, { error_msg: str }
+        """
+        if len(self.conn.keys(f'account:id:{id}')) == 0:
+            return False, { 'error_msg': 'account id not exist' }
+
+        info = self.conn.hgetall(f'account:id:{id}')
+        return True, {
+            'id': int(info['id']),
+            'name': info['name'],
+            'stuNum': info['stuNum'],
+            'role': info['role'],
+        }

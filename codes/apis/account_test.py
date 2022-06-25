@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
-import pytest_utils
+from pytest_utils import (reset_db, add_admin_account, add_student_account, 
+                          get_token, token2header)
 from main import app
 import time
 
@@ -8,8 +9,8 @@ client = TestClient(app)
 
 
 def test_admin_login_and_auth_token():
-    pytest_utils.reset_db()
-    pytest_utils.add_admin_account()
+    reset_db()
+    add_admin_account()
 
     # password not right, 403
     resp = client.post('/login', json = { 
@@ -75,9 +76,9 @@ def test_admin_login_and_auth_token():
 
 
 def test_student_login_and_auth_token():
-    pytest_utils.reset_db()
-    pytest_utils.add_admin_account()
-    pytest_utils.add_student_account('user1', 'pass1', '1024')
+    reset_db()
+    add_admin_account()
+    add_student_account('user1', 'pass1', '1024')
 
     # password not right, 403
     resp = client.post('/login', json = { 
@@ -126,8 +127,8 @@ def test_student_login_and_auth_token():
 
 
 def test_student_register_and_login():
-    pytest_utils.reset_db()
-    pytest_utils.add_admin_account()
+    reset_db()
+    add_admin_account()
 
     # register a student with insufficient information, 422
     resp = client.post('/user', json = {
@@ -199,3 +200,177 @@ def test_student_register_and_login():
     })
     assert resp.status_code == 200, resp.json()
     assert resp.json()['name'] == 'stu1'
+
+
+def test_get_user_information():
+    reset_db()
+    add_admin_account()
+    add_student_account('stu1', 'pass1', 'num1')
+    add_student_account('stu2', 'pass2', '')
+
+    admin_token = get_token(client, 'admin', 'password')
+    stu1_token = get_token(client, 'stu1', 'pass1')
+    stu2_token = get_token(client, 'stu2', 'pass2')
+
+    # no auth token, 422
+    resp = client.get('/user/0')
+    assert resp.status_code == 422, resp.json()
+
+    # use admin token, get data should same
+    resp = client.get('/user/0', headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+    assert resp.json() == {
+        'id': 0,
+        'stuNum': '0',
+        'name': 'admin',
+        'role': 'admin'
+    }
+    resp = client.get('/user/1', headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+    assert resp.json() == {
+        'id': 1,
+        'stuNum': 'num1',
+        'name': 'stu1',
+        'role': 'user'
+    }
+    resp = client.get('/user/2', headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+    assert resp.json() == {
+        'id': 2,
+        'stuNum': '',
+        'name': 'stu2',
+        'role': 'user'
+    }
+
+    # id not exist, 403
+    resp = client.get('/user/3', headers = token2header(admin_token))
+    assert resp.status_code == 403, resp.json()
+
+    # id not int, 422
+    resp = client.get('/user/hahaha', headers = token2header(admin_token))
+    assert resp.status_code == 422, resp.json()
+
+    # use stu1 token get self, should same
+    resp = client.get('/user/1', headers = token2header(stu1_token))
+    assert resp.status_code == 200, resp.json()
+    assert resp.json() == {
+        'id': 1,
+        'stuNum': 'num1',
+        'name': 'stu1',
+        'role': 'user'
+    }
+    # use stu2 token get self, should same
+    resp = client.get('/user/2', headers = token2header(stu2_token))
+    assert resp.status_code == 200, resp.json()
+    assert resp.json() == {
+        'id': 2,
+        'stuNum': '',
+        'name': 'stu2',
+        'role': 'user'
+    }
+    # use stu1 token get stu2, 401
+    resp = client.get('/user/2', headers = token2header(stu1_token))
+    assert resp.status_code == 401, resp.json()
+
+
+def test_modify_user():
+    # TODO currently modify information will not expire available tokens.
+    reset_db()
+    add_admin_account()
+    add_student_account('stu1', 'pass1', 'num1')
+    add_student_account('stu2', 'pass2', '')
+
+    admin_token = get_token(client, 'admin', 'password')
+    stu1_token = get_token(client, 'stu1', 'pass1')
+    stu2_token = get_token(client, 'stu2', 'pass2')
+
+    admin_info = { 'id': 0, 'stuNum': '0', 'name': 'admin', 'role': 'admin' }
+    stu1_info = { 'id': 1, 'stuNum': 'num1', 'name': 'stu1', 'role': 'user' }
+    stu2_info = { 'id': 2, 'stuNum': '', 'name': 'stu2', 'role': 'user' }
+
+    # user change others, 401 and data not change
+    resp = client.put('/user/2', json = {
+        'name': 'mod2',
+        'currentPassword': 'pass2',
+        'newPassword': 'mod2'
+    }, headers = token2header(stu1_token))
+    assert resp.status_code == 401, resp.json()
+    assert client.get('/user/2', headers = token2header(admin_token)).json() \
+           == stu2_info
+
+    # user change self without pass wrong pass, 401
+    resp = client.put('/user/2', json = {
+        'name': 'mod2',
+        'stuNum': 'mod2',
+        'currentPassword': 'wrong',
+        'newPassword': 'mod2'
+    }, headers = token2header(stu2_token))
+    assert resp.status_code == 401, resp.json()
+    assert client.get('/user/2', headers = token2header(admin_token)).json() \
+           == stu2_info
+    # empty currentPassword, 401
+    resp = client.put('/user/2', json = {
+        'name': 'mod2',
+        'stuNum': 'mod2',
+        'currentPassword': '',
+        'newPassword': 'mod2'
+    }, headers = token2header(stu2_token))
+    assert resp.status_code == 401, resp.json()
+    assert client.get('/user/2', headers = token2header(admin_token)).json() \
+           == stu2_info
+    # not send currentPassword, 401
+    resp = client.put('/user/2', json = {
+        'name': 'mod2',
+        'stuNum': 'mod2',
+        'newPassword': 'mod2'
+    }, headers = token2header(stu2_token))
+    assert resp.status_code == 401, resp.json()
+    assert client.get('/user/2', headers = token2header(admin_token)).json() \
+           == stu2_info
+    # user change successful, and can login with new username
+    resp = client.put('/user/2', json = {
+        'name': 'mod2',
+        'stuNum': 'mod2',
+        'currentPassword': 'pass2',
+        'newPassword': 'mod2'
+    }, headers = token2header(stu2_token))
+    assert resp.status_code == 200, resp.json()
+    assert client.get('/user/2', headers = token2header(admin_token)).json() \
+           == { 'id': 2, 'name': 'mod2', 'stuNum': 'mod2', 'role': 'user' }
+    resp = client.post('/login', json = { 'name': 'mod2', 'password': 'mod2' })
+    assert resp.status_code == 200, resp.json()
+    # user change successful with partial information change
+    resp = client.put('/user/1', json = {
+        'stuNum': 'mod1',
+        'currentPassword': 'pass1',
+        'newPassword': 'mod1'
+    }, headers = token2header(stu1_token))
+    assert resp.status_code == 200, resp.json()
+    assert client.get('/user/1', headers = token2header(admin_token)).json() \
+           == { 'id': 1, 'name': 'stu1', 'stuNum': 'mod1', 'role': 'user' }
+    resp = client.post('/login', json = { 'name': 'stu1', 'password': 'mod1' })
+    assert resp.status_code == 200, resp.json()
+
+    # admin change its information without password
+    resp = client.put('/user/0', json = {
+        'stuNum': 'mod0',
+        'newPassword': 'mod0'
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+    assert client.get('/user/0', headers = token2header(admin_token)).json() \
+           == { 'id': 0, 'name': 'admin', 'stuNum': 'mod0', 'role': 'admin' }
+    resp = client.post('/login', json = { 'name': 'admin', 
+                                          'password': 'mod0' })
+    assert resp.status_code == 200, resp.json()
+
+    # admin change others without password
+    resp = client.put('/user/1', json = {
+        'stuNum': 'modx',
+        'newPassword': 'modx'
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+    assert client.get('/user/1', headers = token2header(admin_token)).json() \
+           == { 'id': 1, 'name': 'stu1', 'stuNum': 'modx', 'role': 'user' }
+    resp = client.post('/login', json = { 'name': 'stu1', 
+                                          'password': 'modx' })
+    assert resp.status_code == 200, resp.json()
