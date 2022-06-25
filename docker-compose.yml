@@ -10,7 +10,7 @@ services:
     volumes:
       - ./codes:/app
     ports:
-      - "8090:8090"
+      - "8009:8090"
 
   redis:
     image: redis:latest
