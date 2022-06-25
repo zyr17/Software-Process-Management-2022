@@ -42,6 +42,7 @@ class RedisDB:
         init functions. will call in init or all data has been removed.
         """
         self.init_account()
+        self.init_studyroom()
 
     def init_account(self):
         """
@@ -57,16 +58,9 @@ class RedisDB:
         here if "account:counter" not in database, init counter.
 
         """
-        self.account_prefix = 'account:'
         counter = self.conn.get('account:counter')
         if counter is None:
             self.conn.set('account:counter', 0)
-
-    def _prefix(self, s: str, kind: str):
-        if kind == 'account':
-            return self.account_prefix + s
-        else:
-            raise ValueError(f"Unknown prefix kind {kind}")
 
     def create_user(self, name: str, password: str, stuNum: str, 
                     role: Literal["admin", "user"]):
@@ -138,7 +132,7 @@ class RedisDB:
         if fail, return False, { error_msg: str }
         """
         info = self.conn.hgetall(f'authtoken:{token}')
-        if info is None:
+        if info is None or len(info) == 0:
             return False, { 'error_msg': 'unknown auth token' }
         if int(info['time']) < time.time():
             return False, { 'error_msg': 'auth token expired' }
@@ -221,3 +215,57 @@ class RedisDB:
             res.append(info)
         res.sort(key = lambda x: x['id'])
         return True, res
+
+    def init_studyroom(self):
+        """
+        studyroom related keys initialize.
+
+        all account related keys start with `room:' meaning:
+            "room:counter" int, registered room number
+            "room:id:_" hash { id: int, buildingNumber: str, 
+                classRoomNumber: str, searNumber: int, startTime: int, 
+                endTime: int }, room information for id _.
+            "room:name:_:_" id, to search id by room buildingNum+roomNum
+
+        here if "room:counter" not in database, init counter.
+        """
+        counter = self.conn.get('room:counter')
+        if counter is None:
+            self.conn.set('room:counter', 0)
+
+    def create_studyroom(self, buildingNumber: str, classRoomNumber: str, 
+                         seatNumber: int, startTime: int, endTime: int):
+        """
+        create new studyroom. will use room:counter as its id and increment
+        counter.
+
+        if success, return True, {}
+        if fail, return False, { error_msg: str }
+        """
+        if self.conn.get(
+                f'room:name:{buildingNumber}:{classRoomNumber}') is not None:
+            return False, { 'error_msg': 'duplicate classroom' }
+
+        if len(buildingNumber) == 0 or len(classRoomNumber) == 0:
+            return False, { 'error_msg': 'building or classroom number empty' }
+        if ':' in buildingNumber or ':' in classRoomNumber:
+            return False, { 'error_msg': 'building or classroom has colon' }
+        if seatNumber <= 0:
+            return False, { 'error_msg': 'sear number not positive' }
+        if startTime < 0 or startTime > 23 or endTime < 0 or endTime > 23:
+            return False, { 'error_msg': 'start or end time not in range' }
+        if startTime > endTime:
+            return False, { 'error_msg': 'start time later than end time' }
+
+        id = int(self.conn.get('room:counter'))
+        self.conn.incr('room:counter')
+        self.conn.set(f'room:name:{buildingNumber}:{classRoomNumber}', id)
+        self.conn.hset(f'room:id:{id}', mapping = {
+            'id': id,
+            'buildingNumber': buildingNumber,
+            'classRoomNumber': classRoomNumber,
+            'seatNumber': seatNumber,
+            'startTime': startTime,
+            'endTime': endTime,
+        })
+        return True, {}
