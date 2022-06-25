@@ -41,6 +41,7 @@ def test_admin_login_and_auth_token():
     })
     assert resp.status_code == 200, resp.json()
     assert resp.json()['role'] == 'admin'
+    assert resp.json()['name'] == 'admin'
     # token expire time should later than post time + 3600s
     assert resp.json()['expire'] >= post_time
     token = resp.json()['auth']
@@ -98,6 +99,7 @@ def test_student_login_and_auth_token():
         'password': 'pass1'
     })
     assert resp.status_code == 200, resp.json()
+    assert resp.json()['name'] == 'user1'
     token = resp.json()['auth']
 
     # should 401 admin token check
@@ -189,3 +191,11 @@ def test_student_register_and_login():
         'stuNum': '1'
     })
     assert resp.status_code == 200, resp.json()
+
+    # login and get token
+    resp = client.post('/login', json = { 
+        'name': 'stu1', 
+        'password': 'password'
+    })
+    assert resp.status_code == 200, resp.json()
+    assert resp.json()['name'] == 'stu1'

@@ -106,7 +106,8 @@ class RedisDB:
             time: expire unix time seconds
             id: corresponding user id for this token
 
-        if success, return True, { auth: str, role: str }
+        if success, return True, { name: str, auth: str, role: str, 
+                                   expitr: int }
         if fail, return False, { error_msg: str }
         """
         id = self.conn.get(f'account:name:{name}')
@@ -125,7 +126,8 @@ class RedisDB:
             'id': id,
         })
         role = self.conn.hget(f'account:id:{id}', 'role')
-        return True, { 'auth': token, 'role': role, 'expire': expire_time }
+        return True, { 'name': name, 'auth': token, 'role': role, 
+                       'expire': expire_time }
 
     def check_auth_token(self, token: str):
         """
