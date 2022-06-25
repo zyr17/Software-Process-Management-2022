@@ -108,7 +108,7 @@ export default {
         return;
       }
       this.$http
-        .post(backend_link + "student", this.student, {
+        .post(backend_link + "user", this.student, {
           headers: {
             "Content-Type": "application/json",
           },
@@ -123,7 +123,7 @@ export default {
           (response) => {
             this.notifications.push({
               type: "error",
-              message: "学生注册失败",
+              message: "学生注册失败 " + JSON.stringify(response),
             });
           }
         );

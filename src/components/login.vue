@@ -76,7 +76,7 @@ export default {
               type: "success",
               message: "登录成功",
             });
-            store.commit('setAuth', response);
+            store.commit('setAuth', response.body);
           },
           (response) => {
 
@@ -88,9 +88,8 @@ export default {
 
             this.notifications.push({
               type: "error",
-              message: "假装以用户登录" + JSON.stringify(response),
+              message: "登录失败 " + response.body.detail.error_msg,
             });
-            store.commit('setAuth', {auth: '1', role: 'user'});
 
             // this.notifications.push({
             //   type: "error",

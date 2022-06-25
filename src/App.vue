@@ -1,13 +1,16 @@
 <template>
   <div id="app">
     <p class="tab">
-      <span v-if="$store.state.role != 'none'">你好，{{ $store.state.role == 'admin' ? '管理员' : '用户' }}</span>
+      <span v-if="$store.state.role != 'none'">你好，{{ $store.state.role == 'admin' ? '管理员' : '用户' }} {{ $store.state.name ? $store.state.name : '' }}</span>
       <router-link v-if="$store.state.role == 'none'" to="/register" class="btn btn-primary">注册</router-link>
       <router-link v-if="$store.state.role == 'none'" to="/login" class="btn btn-primary">登录</router-link>
       <router-link v-if="$store.state.role == 'user'" to="/personal_info" class="btn btn-primary">个人信息</router-link>
+      <router-link v-if="$store.state.role == 'user'" to="/checkin" class="btn btn-success">签到</router-link>
       <router-link v-if="$store.state.role == 'user'" to="/book" class="btn btn-primary">预约</router-link>
+      <router-link v-if="$store.state.role == 'user'" to="/history" class="btn btn-primary">历史</router-link>
       <router-link v-if="$store.state.role == 'admin'" to="/all_students" class="btn btn-primary">学生管理</router-link>
       <router-link v-if="$store.state.role == 'admin'" to="/all_studyrooms" class="btn btn-primary">自习室管理</router-link>
+      <router-link v-if="$store.state.role == 'admin'" to="/card_checkin" class="btn btn-success">刷卡签到</router-link>
       <button v-if="$store.state.role != 'none'" @click="logout" class="btn btn-primary">登出</button>
     </p>
     <p class="tab">

@@ -18,6 +18,8 @@ export default new Vuex.Store({
     setAuth(state, datajson) { // 只能接受两个参数，用于修改store存的值
       state.auth = datajson.auth;
       state.role = datajson.role;
+      state.expire = datajson.expire;
+      state.name = datajson.name;
     },
     clearAuth(state) {
       state.auth = null;
