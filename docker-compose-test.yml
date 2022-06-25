@@ -9,7 +9,7 @@ services:
     volumes:
       - ./codes:/app
     restart: "no"
-    command: "pytest"
+    command: "pytest --cov=."
 
   redis:
     image: redis:latest
