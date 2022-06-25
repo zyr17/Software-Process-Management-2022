@@ -387,6 +387,14 @@ def test_modify_user():
     assert resp.status_code == 401, resp.json()
     assert client.get('/user/2', headers = token2header(admin_token)).json() \
            == stu2_info
+    # change to exist username, 403
+    resp = client.put('/user/2', json = {
+        'name': 'admin',
+        'stuNum': 'mod2',
+        'currentPassword': 'pass2',
+        'newPassword': 'mod2'
+    }, headers = token2header(stu2_token))
+    assert resp.status_code == 403, resp.json()
     # user change successful, and can login with new username
     resp = client.put('/user/2', json = {
         'name': 'mod2',

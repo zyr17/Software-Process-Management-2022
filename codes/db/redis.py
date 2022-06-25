@@ -164,6 +164,10 @@ class RedisDB:
         """
         if len(self.conn.keys(f'account:id:{id}')) == 0:
             return False, { 'error_msg': 'account id not exist' }
+        info = self.conn.hgetall(f'account:id:{id}')
+        if name is not None and name != info['name'] \
+                and len(self.conn.keys(f'account:name:{name}')) != 0:
+            return False, { 'error_msg': 'target name exists' }
 
         info = self.conn.hgetall(f'account:id:{id}')
         self.conn.delete(f'account:name:{info["name"]}')
