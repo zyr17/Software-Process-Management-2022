@@ -524,7 +524,9 @@ class RedisDB:
         booked_keys = self.conn.keys(f'book:*:{roomid}:*:*:*')
         checkin_keys = self.conn.keys(f'checkin:*:{roomid}:*:*:*')
         cancel_keys = self.conn.keys(f'cancel:*:{roomid}:*:*:*')
-        self.conn.delete(*(booked_keys + checkin_keys + cancel_keys))
+        allkeys = booked_keys + checkin_keys + cancel_keys
+        if len(allkeys) > 0:
+            self.conn.delete(*(booked_keys + checkin_keys + cancel_keys))
         return True, {}
 
     def book(self, userid: int, roomId: int, date: int, startTime: int, 
