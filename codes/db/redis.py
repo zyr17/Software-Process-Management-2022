@@ -595,6 +595,7 @@ class RedisDB:
             userName: str,
             buildingNum: str,
             classRoomNum: str,
+            date: int,
             startTime: int,
             endTime: int
         }
@@ -628,6 +629,7 @@ class RedisDB:
             'userName': userName,
             'buildingNum': info['buildingNumber'],
             'classRoomNum': info['classRoomNumber'],
+            'date': info['date'],
             'startTime': info['startTime'],
             'endTime': info['endTime']
         }

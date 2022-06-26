@@ -180,6 +180,14 @@ def test_card_checkin():
         'userId': 1
     }, headers = token2header(admin_token))
     assert resp.status_code == 200, resp.json()
+    assert resp.json() == {
+        'userName': 'stu',
+        'buildingNum': 'building1',
+        'classRoomNum': 'room1',
+        'date': 20005,
+        'startTime': 12,
+        'endTime': 15
+    }
     # checkin twice will fail
     resp = client.post('/card_checkin', json = {
         'roomId': 0,
@@ -206,13 +214,21 @@ def test_card_checkin():
     assert resp.status_code == 403, resp.json()
 
     # position checkin success
-    resp = client.post('/position_checkin/1', json = {
-        'position': 'building1:room1'
-    }, headers = token2header(user1_token))
-    assert resp.status_code == 200, resp.json()
-    # checkin twice will fail
     resp = client.post('/card_checkin', json = {
         'roomId': 0,
         'userId': 1
     }, headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+    assert resp.json() == {
+        'userName': 'stu',
+        'buildingNum': 'building1',
+        'classRoomNum': 'room1',
+        'date': 20005,
+        'startTime': 10,
+        'endTime': 11
+    }
+    # checkin twice will fail
+    resp = client.post('/position_checkin/1', json = {
+        'position': 'building1:room1'
+    }, headers = token2header(user1_token))
     assert resp.status_code == 403, resp.json()
