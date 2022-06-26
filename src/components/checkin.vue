@@ -15,8 +15,8 @@
     </div>
     <div v-else>
       <p>预约教室：{{ booking.buildingNumber }} {{ booking.classRoomNumber }}</p>
-      <p>座位号：{{ booking.seatNumber }}</p>
-      <p>预约时间：{{ booking.bookTime }}</p>
+      <!-- <p>座位号：{{ booking.seatNumber }}</p> -->
+      <p>预约时间：{{ new Date(booking.bookTimeStamp * 1000.) }}</p>
       <p>自习时间：{{ to_time(booking.startTime) }}-{{ to_time(booking.endTime + 1) }}</p>
 
       <form v-on:submit.prevent="checkin">
@@ -49,34 +49,48 @@ import { backend_link } from "../const.vue";
 
 import store from '../store';
 
-let auth = store.state.auth;
-
 export default {
   data() {
     return {
       booking: {
-        id: 1,
-        buildingNumber: 'JB',
-        classRoomNumber: '101',
-        seatNumber: '25',
-        bookTime: '2022-06-01 14:00',
-        startTime: 14,
-        endTime: 15,
-        checkinTime: '-',
-        status: 'booking',
+        // id: 1,
+        // buildingNumber: 'JB',
+        // classRoomNumber: '101',
+        // seatNumber: '25',
+        // bookTime: '2022-06-01 14:00',
+        // startTime: 14,
+        // endTime: 15,
+        // checkinTime: '-',
+        // status: 'booking',
       },
-      is_booked: true,
+      is_booked: false,
       notifications: [],
       current_position: '',
     };
   },
   
   created: function () {
-    this.$http.get(backend_link + 'current_booking').then(
+    this.$http.get(backend_link + 'book/' + store.state.id, {
+      headers: {
+        'Auth-Token': store.state.auth
+      }
+    }).then(
       (response) => {
         let data = response.data;
-        this.is_booked = data.is_booked;
-        if (data.is_booked) this.booking = data.booking;
+        this.is_booked = true;
+        this.booking = data;
+      },
+      (response) => {
+        console.log(response)
+        if (response.status == 404) {
+          this.is_booked = false;
+        }
+        else {
+          this.notifications.push({
+            type: "danger",
+            message: "查询当前预约情况失败 " + JSON.stringify(response.body.detail),
+          });
+        }
       }
     )
   },

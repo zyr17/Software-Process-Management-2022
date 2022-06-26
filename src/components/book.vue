@@ -163,15 +163,26 @@ export default {
   },
 
   created: function () {
-    this.$http.get(backend_link + 'current_booking', {
+    this.$http.get(backend_link + 'book/' + store.state.id, {
       headers: {
         'Auth-Token': store.state.auth
       }
     }).then(
       (response) => {
         let data = response.data;
-        this.is_booked = data.is_booked;
-        if (data.is_booked) this.booking = data.booking;
+        this.is_booked = true;
+        this.booking = data.booking;
+      },
+      (response) => {
+        if (response.status == 404) {
+          this.is_booked = false;
+        }
+        else {
+          this.notifications.push({
+            type: "danger",
+            message: "查询当前预约情况失败 " + JSON.stringify(response.body.detail),
+          });
+        }
       }
     )
     this.$http.get(backend_link + 'studyroom', {
@@ -191,7 +202,7 @@ export default {
     book () {
       console.log(this.selectedId, this.selectedStartTime, this.selectedEndTime)
       this.$http.post(backend_link + "book/" + store.state.id, {
-        roomid: this.selectedId,
+        roomId: this.selectedId,
         startTime: this.selectedStartTime,
         endTime: this.selectedEndTime
       }, {
