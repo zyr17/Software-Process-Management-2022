@@ -58,7 +58,7 @@
 <script>
 import Notification from "./notifications.vue";
 
-import { backend_link } from "../const.vue";
+import { backend_link, success_proxy_timeout } from "../const.vue";
 import store from '../store';
 
 
@@ -113,10 +113,18 @@ export default {
       selectedClassroom: '',
       selectedStartTime: null,
       selectedEndTime: null,
+      notifications: [],
     };
   },
 
   computed: {
+    selectedId () {
+      for (let i of this.originalStudyRooms)
+        if (i.buildingNumber == this.selectedBuilding
+            && i.classRoomNumber == this.selectedClassroom)
+          return i.id
+        return null
+    },
     buildingList () {
       let arr = [];
       for (let i of this.originalStudyRooms)
@@ -181,25 +189,30 @@ export default {
   methods: {
     
     book () {
-      this.$http.post(backend_link + "book", {
-        auth: '',
-        buildingNumber: this.selectedBuilding,
-        classRoomNumber: this.selectedClassroom,
+      console.log(this.selectedId, this.selectedStartTime, this.selectedEndTime)
+      this.$http.post(backend_link + "book/" + store.state.id, {
+        roomid: this.selectedId,
         startTime: this.selectedStartTime,
         endTime: this.selectedEndTime
       }, {
         headers: {
-          "Content-Type": "application/json",
+          'Auth-Token': store.state.auth
         },
       })
       .then(
         (response) => {
-          this.$router.push({ name: "checkin" });
+          this.notifications.push({
+            type: "success",
+            message: "预约成功"
+          });
+          setTimeout(() => {
+            this.$router.push({ name: "checkin" });
+          }, success_proxy_timeout)
         },
         (response) => {
           this.notifications.push({
             type: "danger",
-            message: "预约失败 " + JSON.stringify(response),
+            message: "预约失败 " + JSON.stringify(response.body.detail),
           });
         }
       );
