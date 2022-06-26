@@ -799,3 +799,4 @@ def test_delete_studyroom():
         'book': []
     }]
 
+    # TODO when history done, test after delete

@@ -137,6 +137,10 @@ class RedisDB:
         if int(info['time']) < time.time():
             return False, { 'error_msg': 'auth token expired' }
         id = info['id']
+        if len(self.conn.keys(f'account:id:{id}')) == 0:
+            return False, { 
+                'error_msg': 'user for this auth token does not exist' 
+            }
         role = self.conn.hget(f'account:id:{id}', 'role')
         return True, { 'id': int(id), 'role': role }
 
@@ -219,6 +223,34 @@ class RedisDB:
             res.append(info)
         res.sort(key = lambda x: x['id'])
         return True, res
+
+    def delete_user(self, userid: int, auth_token: str):
+        """
+        delete a user. all connected information, include booking,
+        checkin, cancel history, will be automatically removed. although
+        deleted, account id counter will not change.
+
+        specifically, cannot delete self account to prevent deleting all admin
+        accounts. use auth token to check this.
+
+        if success, return True, {}
+        if fail, return False, { error_msg: str }
+        """
+        resp, info = self.check_auth_token(auth_token)
+        if not resp:
+            return False, info
+        if info['id'] == userid:
+            return False, { 'error_msg': 'cannot delete self account' }
+        resp, info = self.get_user(userid)
+        if not resp:
+            return False, info
+        self.conn.delete(f'account:id:{userid}',
+                         f'account:name:{info["name"]}')
+        booked_keys = self.conn.keys(f'book:{userid}:*:*:*:*')
+        checkin_keys = self.conn.keys(f'checkin:{userid}:*:*:*:*')
+        cancel_keys = self.conn.keys(f'cancel:{userid}:*:*:*:*')
+        self.conn.delete(*(booked_keys + checkin_keys + cancel_keys))
+        return True, {}
 
     def init_studyroom(self):
         """

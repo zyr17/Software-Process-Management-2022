@@ -131,3 +131,14 @@ def get_all_user(auth_token: Optional[str] = Header()):
             detail = info
         )
     return info
+
+@router.delete('/user/{id}')
+def delete_user(id: int, auth_token: str = Header()):
+    check_auth_token(auth_token, True)
+    resp, info = db.delete_user(id, auth_token)
+    if not resp:
+        raise HTTPException(
+            status_code = 403,
+            detail = info
+        )
+    return info
