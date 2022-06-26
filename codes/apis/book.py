@@ -48,3 +48,26 @@ def get_book_info(userid: int, auth_token: str = Header()):
             detail = info
         )
     return info
+
+
+@router.delete('/book/{userid}')
+def delete_book(userid: int, auth_token: str = Header()):
+    check_auth_token(auth_token, False, userid)
+    resp, info = db.is_booked(userid)
+    if not resp:
+        raise HTTPException(
+            status_code = 403,
+            detail = info
+        )
+    if not info:
+        raise HTTPException(
+            status_code = 404,
+            detail = 'not found'
+        )
+    resp, info = db.cancel_book(userid)
+    if not resp:
+        raise HTTPException(
+            status_code = 403,
+            detail = info
+        )
+    return info

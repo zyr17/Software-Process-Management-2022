@@ -389,3 +389,90 @@ def test_get_book():
     respjson = resp.json()
     del respjson['bookTimeStamp']
     assert respjson == book2_out
+
+
+def test_cancel():
+    reset_db()
+    add_admin_account()
+    add_student_account('stu', 'pass', '')
+    add_student_account('stu2', 'pass2', '')
+    add_student_account('stu3', 'pass3', '')
+    admin_token = get_token(client)
+    user1_token = get_token(client, 'stu', 'pass')
+    user2_token = get_token(client, 'stu2', 'pass2')
+    user3_token = get_token(client, 'stu3', 'pass3')
+
+    resp = client.post('/studyroom', json = {
+        'buildingNumber': 'building1',
+        'classRoomNumber': 'room1',
+        'seatNumber': 2,
+        'startDate': 20000,
+        'endDate': 20010,
+        'startTime': 8,
+        'endTime': 20
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+
+    # make book
+    resp = client.post('/book/1', json = {
+        'roomId': 0,
+        'date': 20005,
+        'startTime': 12,
+        'endTime': 15
+    }, headers = token2header(user1_token))
+    assert resp.status_code == 200, resp.json()
+    resp = client.post('/book/3', json = {
+        'roomId': 0,
+        'date': 20005,
+        'startTime': 10,
+        'endTime': 17
+    }, headers = token2header(user3_token))
+    assert resp.status_code == 200, resp.json()
+
+    # no auth, 422
+    resp = client.delete('/book/1')
+    assert resp.status_code == 422, resp.json()
+    # cancel other user, 401
+    resp = client.delete('/book/1', headers = token2header(user2_token))
+    assert resp.status_code == 401, resp.json()
+    # cancel non-exist user, 403
+    resp = client.delete('/book/9', headers = token2header(admin_token))
+    assert resp.status_code == 403, resp.json()
+    # cancel not booked user, 404
+    resp = client.delete('/book/2', headers = token2header(user2_token))
+    assert resp.status_code == 404, resp.json()
+
+    # book full room, 403
+    resp = client.post('/book/2', json = {
+        'roomId': 0,
+        'date': 20005,
+        'startTime': 11,
+        'endTime': 16
+    }, headers = token2header(user2_token))
+    assert resp.status_code == 403, resp.json()
+
+    # user cancel
+    resp = client.delete('/book/1', headers = token2header(user1_token))
+    assert resp.status_code == 200, resp.json()
+
+    # now can book
+    resp = client.post('/book/2', json = {
+        'roomId': 0,
+        'date': 20005,
+        'startTime': 11,
+        'endTime': 16
+    }, headers = token2header(user2_token))
+    assert resp.status_code == 200, resp.json()
+
+    # admin cancel user2
+    resp = client.delete('/book/2', headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+
+    # user1 can book
+    resp = client.post('/book/1', json = {
+        'roomId': 0,
+        'date': 20005,
+        'startTime': 11,
+        'endTime': 16
+    }, headers = token2header(user1_token))
+    assert resp.status_code == 200, resp.json()

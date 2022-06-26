@@ -636,3 +636,29 @@ class RedisDB:
             'startTime': info['startTime'],
             'endTime': info['endTime']
         }
+
+    def cancel_book(self, userid: int):
+        """
+        cancel a book. 
+        if cancel, key prefix book: will change to cancel:, and value will
+        become a hash with { book: int, cancel: int }
+
+        if success, return True, {}
+        if fail, return False, { error_msg: str }
+        """
+        resp, info = self.get_book(userid)
+        if not resp:
+            return False, info
+
+        # cancel
+        old_key = (f'book:{userid}:{info["roomId"]}:{info["date"]}:'
+                   f'{info["startTime"]}:{info["endTime"]}')
+        new_key = (f'cancel:{userid}:{info["roomId"]}:{info["date"]}:'
+                   f'{info["startTime"]}:{info["endTime"]}')
+        self.conn.delete(old_key)
+        self.conn.hset(new_key, mapping = {
+            'book': info['bookTimeStamp'],
+            'cancel': int(time.time())
+        })
+
+        return True, {}
