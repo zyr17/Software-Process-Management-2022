@@ -45,7 +45,7 @@
 <script>
 import Notification from "./notifications.vue";
 
-import { backend_link } from "../const.vue";
+import { backend_link, success_proxy_timeout } from "../const.vue";
 
 import store from '../store';
 
@@ -97,30 +97,36 @@ export default {
 
   methods: {
     checkin () {
-      this.$http.post(backend_link + "current_booking", {
+      this.$http.post(backend_link + "position_checkin/" + store.state.id, {
         position: this.current_position
       }, {
         headers: {
-          "Content-Type": "application/json",
+          'Auth-Token': store.state.auth
         },
       })
       .then(
         (response) => {
+          this.notifications.push({
+            type: "success",
+            message: "签到成功",
+          });
+          setTimeout(() => {
           this.$router.push({ name: "history" });
+          }, success_proxy_timeout)
         },
         (response) => {
           this.notifications.push({
             type: "danger",
-            message: "签到失败 " + JSON.stringify(response),
+            message: "签到失败 " + JSON.stringify(response.body.detail),
           });
         }
       );
     },
     cancel () {
       this.$http
-        .delete(backend_link + "current_booking", {
+        .delete(backend_link + "position_checkin/" + store.state.id, {
           headers: {
-            "Content-Type": "application/json",
+            'Auth-Token': store.state.auth
           },
         })
         .then(
@@ -130,7 +136,7 @@ export default {
           (response) => {
             this.notifications.push({
               type: "danger",
-              message: "取消失败",
+              message: "取消失败 " + JSON.stringify(response.body.detail),
             });
           }
         );

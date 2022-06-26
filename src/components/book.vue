@@ -284,9 +284,9 @@ export default {
       for (let i of this.originalStudyRooms) {
         if (date < i.startDate || date > i.endDate)
           continue
-        console.log(date, i)
         let remain_arr = this.get_remain_arr(i, date)
-        if (remain_arr[current]) {
+        console.log(date, i, remain_arr)
+        if (remain_arr[current] > 0) {
           this.selectedBuilding = i.buildingNumber
           this.selectedClassroom = i.classRoomNumber
           this.selectedStartTime = current
