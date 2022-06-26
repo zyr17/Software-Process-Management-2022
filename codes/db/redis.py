@@ -428,16 +428,16 @@ class RedisDB:
         })
         return True, {}
 
-    def book(self, userid: int, roomid: int, startTime: int, endTime: int):
+    def book(self, userid: int, roomId: int, startTime: int, endTime: int):
         """
         user request book for one seat. one book key will save as:
-        book:{userid}:{roomid}:{startTime}:{endTime}
+        book:{userid}:{roomId}:{startTime}:{endTime}
         value is book unix timestamp.
 
         if success, return True, {}
         if fail, return False, { error_msg: str }
         """
-        if len(self.conn.keys(f'room:id:{roomid}')) == 0:
+        if len(self.conn.keys(f'room:id:{roomId}')) == 0:
             return False, { 'error_msg': 'room id not found' }
         if len(self.conn.keys(f'account:id:{userid}')) == 0:
             return False, { 'error_msg': 'user id not found' }
@@ -445,7 +445,7 @@ class RedisDB:
             return False, { 'error_msg': 'user has an active booking' }
         if startTime > endTime:
             return False, { 'error_msg': 'start time large than end time' }
-        _, roominfo = self.get_studyroom(roomid)
+        _, roominfo = self.get_studyroom(roomId)
         empty_dict = {}
         for one in roominfo['book']:
             empty_dict[one['time']] = one['emptyNumber']
@@ -455,6 +455,53 @@ class RedisDB:
             if empty_dict[t] <= 0:
                 return False, { 'error_msg': 'not enough empty seat' }
 
-        self.conn.set(f'book:{userid}:{roomid}:{startTime}:{endTime}',
+        self.conn.set(f'book:{userid}:{roomId}:{startTime}:{endTime}',
                       int(time.time()))
         return True, {}
+
+    def is_booked(self, userid: int):
+        """
+        check whether userid is booked now
+
+        if success, return True, True|False
+        if fail, return False, { error_msg: str }
+        """
+        if len(self.conn.keys(f'account:id:{userid}')) == 0:
+            return False, { 'error_msg': 'account not exist' }
+        return True, len(self.conn.keys(f'book:{userid}:*')) > 0
+
+    def get_book(self, userid: int):
+        """
+        get book information of user.
+
+        if success, return True, {
+            roomId: int,
+            buildingNumber: str,
+            classRoomNumber: str,
+            startTime: int,
+            endTime: int,
+            bookTimeStamp: int
+        }
+        if fail, return False, { error_msg: str }
+        """
+        resp, info = self.is_booked(userid)
+        if not resp:
+            return False, info
+        if not info:
+            return False, { 'error_msg': 'book not found' }
+        key = self.conn.keys(f'book:{userid}:*')[0]
+        booktime = self.conn.get(key)
+        key = key.split(':')
+        roomId, startTime, endTime = [int(x) for x in key[2:]]
+        resp, info = self.get_studyroom(roomId)
+        if not resp:
+            return False, info
+        res = {
+            'roomId': roomId,
+            'buildingNumber': info['buildingNumber'],
+            'classRoomNumber': info['classRoomNumber'],
+            'startTime': startTime,
+            'endTime': endTime,
+            'bookTimeStamp': booktime
+        }
+        return True, res

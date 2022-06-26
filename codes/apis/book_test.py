@@ -8,7 +8,7 @@ import time
 client = TestClient(app)
 
 
-def test_book():
+def test_book_and_get_all_studyroom():
     reset_db()
     add_admin_account()
     add_student_account('stu', 'pass', '')
@@ -28,7 +28,7 @@ def test_book():
 
     # no header, 422
     resp = client.post('/book/1', json = {
-        'roomid': 0,
+        'roomId': 0,
         'startTime': 14,
         'endTime': 15
     })
@@ -41,19 +41,19 @@ def test_book():
     }, headers = token2header(user1_token))
     assert resp.status_code == 422, resp.json()
     resp = client.post('/book/1', json = {
-        'roomid': 0,
+        'roomId': 0,
         'endTime': 15
     }, headers = token2header(user1_token))
     assert resp.status_code == 422, resp.json()
     resp = client.post('/book/1', json = {
-        'roomid': 0,
+        'roomId': 0,
         'startTime': 14,
     }, headers = token2header(user1_token))
     assert resp.status_code == 422, resp.json()
 
     # user book for other user, 401
     resp = client.post('/book/2', json = {
-        'roomid': 0,
+        'roomId': 0,
         'startTime': 14,
         'endTime': 15
     }, headers = token2header(user1_token))
@@ -61,14 +61,14 @@ def test_book():
 
     # book not exist room, 403
     resp = client.post('/book/1', json = {
-        'roomid': 1,
+        'roomId': 1,
         'startTime': 14,
         'endTime': 15
     }, headers = token2header(user1_token))
     assert resp.status_code == 403, resp.json()
     # book not exist user, 403
     resp = client.post('/book/9', json = {
-        'roomid': 0,
+        'roomId': 0,
         'startTime': 14,
         'endTime': 15
     }, headers = token2header(admin_token))
@@ -76,20 +76,20 @@ def test_book():
 
     # start time large than end time, 403
     resp = client.post('/book/1', json = {
-        'roomid': 0,
+        'roomId': 0,
         'startTime': 16,
         'endTime': 15
     }, headers = token2header(user1_token))
     assert resp.status_code == 403, resp.json()
     # time not in room range, 403
     resp = client.post('/book/1', json = {
-        'roomid': 0,
+        'roomId': 0,
         'startTime': 7,
         'endTime': 15
     }, headers = token2header(user1_token))
     assert resp.status_code == 403, resp.json()
     resp = client.post('/book/1', json = {
-        'roomid': 0,
+        'roomId': 0,
         'startTime': 9,
         'endTime': 22
     }, headers = token2header(user1_token))
@@ -97,7 +97,7 @@ def test_book():
 
     # book success
     resp = client.post('/book/1', json = {
-        'roomid': 0,
+        'roomId': 0,
         'startTime': 12,
         'endTime': 15
     }, headers = token2header(user1_token))
@@ -105,7 +105,7 @@ def test_book():
 
     # duplicate book, 403
     resp = client.post('/book/1', json = {
-        'roomid': 0,
+        'roomId': 0,
         'startTime': 8,
         'endTime': 9
     }, headers = token2header(user1_token))
@@ -113,19 +113,19 @@ def test_book():
 
     # book time has no empty seat, 403
     resp = client.post('/book/2', json = {
-        'roomid': 0,
+        'roomId': 0,
         'startTime': 10,
         'endTime': 12
     }, headers = token2header(user2_token))
     assert resp.status_code == 403, resp.json()
     resp = client.post('/book/2', json = {
-        'roomid': 0,
+        'roomId': 0,
         'startTime': 14,
         'endTime': 17
     }, headers = token2header(user2_token))
     assert resp.status_code == 403, resp.json()
     resp = client.post('/book/2', json = {
-        'roomid': 0,
+        'roomId': 0,
         'startTime': 9,
         'endTime': 17
     }, headers = token2header(user2_token))
@@ -133,11 +133,36 @@ def test_book():
 
     # admin to book success
     resp = client.post('/book/2', json = {
-        'roomid': 0,
+        'roomId': 0,
         'startTime': 8,
         'endTime': 10
     }, headers = token2header(admin_token))
     assert resp.status_code == 200, resp.json()
+
+    # get all studyroom, empty number should match
+    resp = client.get('/studyroom', headers = token2header(user1_token))
+    assert resp.status_code == 200, resp.json()
+    assert resp.json() == [ {
+        'id': 0,
+        'buildingNumber': 'building1',
+        'classRoomNumber': 'room1',
+        'seatNumber': 1,
+        'startTime': 8,
+        'endTime': 18,
+        'book': [
+            { 'time': 8, 'emptyNumber': 0 },
+            { 'time': 9, 'emptyNumber': 0 },
+            { 'time': 10, 'emptyNumber': 0 },
+            { 'time': 11, 'emptyNumber': 1 },
+            { 'time': 12, 'emptyNumber': 0 },
+            { 'time': 13, 'emptyNumber': 0 },
+            { 'time': 14, 'emptyNumber': 0 },
+            { 'time': 15, 'emptyNumber': 0 },
+            { 'time': 16, 'emptyNumber': 1 },
+            { 'time': 17, 'emptyNumber': 1 },
+            { 'time': 18, 'emptyNumber': 1 },
+        ]
+    } ]
 
 
 def test_book_and_modify_studyroom():
@@ -160,13 +185,13 @@ def test_book_and_modify_studyroom():
 
     # make book
     resp = client.post('/book/1', json = {
-        'roomid': 0,
+        'roomId': 0,
         'startTime': 12,
         'endTime': 15
     }, headers = token2header(user1_token))
     assert resp.status_code == 200, resp.json()
     resp = client.post('/book/2', json = {
-        'roomid': 0,
+        'roomId': 0,
         'startTime': 11,
         'endTime': 16
     }, headers = token2header(user2_token))
@@ -211,3 +236,79 @@ def test_book_and_modify_studyroom():
         'endTime': 20,
     }, headers = token2header(admin_token))
     assert resp.status_code == 200, resp.json()
+
+
+def test_get_book():
+    pass
+
+    reset_db()
+    add_admin_account()
+    add_student_account('stu', 'pass', '')
+    add_student_account('stu2', 'pass2', '')
+    admin_token = get_token(client)
+    user1_token = get_token(client, 'stu', 'pass')
+    user2_token = get_token(client, 'stu2', 'pass2')
+
+    resp = client.post('/studyroom', json = {
+        'buildingNumber': 'building1',
+        'classRoomNumber': 'room1',
+        'seatNumber': 2,
+        'startTime': 8,
+        'endTime': 20
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+
+    # get not booked user, 404
+    resp = client.get('/book/1', headers = token2header(user1_token))
+    assert resp.status_code == 404, resp.json()
+
+    # get not exist user, 403
+    resp = client.get('/book/9', headers = token2header(admin_token))
+    assert resp.status_code == 403, resp.json()
+
+    # make book
+    resp = client.post('/book/1', json = {
+        'roomId': 0,
+        'startTime': 12,
+        'endTime': 15
+    }, headers = token2header(user1_token))
+    assert resp.status_code == 200, resp.json()
+    resp = client.post('/book/2', json = {
+        'roomId': 0,
+        'startTime': 11,
+        'endTime': 16
+    }, headers = token2header(user2_token))
+    assert resp.status_code == 200, resp.json()
+
+    book1_out = {
+        'roomId': 0,
+        'buildingNumber': 'building1',
+        'classRoomNumber': 'room1',
+        'startTime': 12,
+        'endTime': 15
+    }
+    book2_out = {
+        'roomId': 0,
+        'buildingNumber': 'building1',
+        'classRoomNumber': 'room1',
+        'startTime': 11,
+        'endTime': 16
+    }
+
+    # user get other user book, 401
+    resp = client.get('/book/1', headers = token2header(user2_token))
+    assert resp.status_code == 401, resp.json()
+
+    # user get book
+    resp = client.get('/book/1', headers = token2header(user1_token))
+    assert resp.status_code == 200, resp.json()
+    respjson = resp.json()
+    del respjson['bookTimeStamp']
+    assert respjson == book1_out
+
+    # admin get book
+    resp = client.get('/book/2', headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+    respjson = resp.json()
+    del respjson['bookTimeStamp']
+    assert respjson == book2_out

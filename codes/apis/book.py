@@ -10,7 +10,7 @@ router = APIRouter()
 
 
 class book_post(BaseModel):
-    roomid: int
+    roomId: int
     startTime: int
     endTime: int
 
@@ -18,9 +18,32 @@ class book_post(BaseModel):
 @router.post('/book/{userid}')
 def user_book(userid: int, data: book_post, auth_token: str = Header()):
     check_auth_token(auth_token, False, userid)
-    resp, info = db.book(userid, data.roomid, data.startTime, data.endTime)
+    resp, info = db.book(userid, data.roomId, data.startTime, data.endTime)
     if not resp:
         raise HTTPException(
             status_code = 403,
             detail = info
         )
+
+
+@router.get('/book/{userid}')
+def get_book_info(userid: int, auth_token: str = Header()):
+    check_auth_token(auth_token, False, userid)
+    resp, info = db.is_booked(userid)
+    if not resp:
+        raise HTTPException(
+            status_code = 403,
+            detail = info
+        )
+    if not info:
+        raise HTTPException(
+            status_code = 404,
+            detail = 'not found'
+        )
+    resp, info = db.get_book(userid)
+    if not resp:
+        raise HTTPException(
+            status_code = 403,
+            detail = info
+        )
+    return info
