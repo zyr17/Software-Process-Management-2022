@@ -605,7 +605,7 @@ class RedisDB:
             return False, info
         if roomid != info['roomId']:
             return False, {
-                'error_msg': 'room wrong! you booked'
+                'error_msg': 'room wrong! you booked '
                 f"{info['buildingNumber']} {info['classRoomNumber']}!"
             }
 
