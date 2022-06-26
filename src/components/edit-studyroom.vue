@@ -56,6 +56,18 @@
       </div>
 
       <div class="form-group">
+        <label name="studyroom_starttime">可预约开始日期</label>
+        <el-calendar v-model="studyroom.startDate">
+        </el-calendar>
+      </div>
+
+      <div class="form-group">
+        <label name="studyroom_starttime">可预约结束日期</label>
+        <el-calendar v-model="studyroom.endDate">
+        </el-calendar>
+      </div>
+
+      <div class="form-group">
         <label name="studyroom_starttime">可预约开始时间</label>
         <el-select v-model="studyroom.startTime" placeholder="请选择">
           <el-option
@@ -135,23 +147,32 @@ export default {
   methods: {
     getStudyRoom: function () {
       let input_data = this.$route.params.studyroom;
-      if (input_data) this.studyroom = input_data;
+      if (input_data) {
+        // change date number
+        input_data.startDate *= 1000 * 86400
+        input_data.endDate *= 1000 * 86400
+        this.studyroom = input_data;
+      }
       else return false;
       return true;
     },
 
     editstudyroom: function () {
       let promise = null
+      let upload_data = JSON.parse(JSON.stringify(this.studyroom))
+      console.log(this.studyroom, upload_data)
+      upload_data.startDate = parseInt(new Date(upload_data.startDate).getTime() / 86400 / 1000)
+      upload_data.endDate = parseInt(new Date(upload_data.endDate).getTime() / 86400 / 1000)
       if (this.is_edit)
         promise = this.$http
-          .put(backend_link + "studyroom/" + this.studyroom.id, this.studyroom, {
+          .put(backend_link + "studyroom/" + this.studyroom.id, upload_data, {
             headers: {
               'Auth-Token': store.state.auth
             },
           })
       else
         promise = this.$http
-          .post(backend_link + "studyroom", this.studyroom, {
+          .post(backend_link + "studyroom", upload_data, {
             headers: {
               'Auth-Token': store.state.auth
             },

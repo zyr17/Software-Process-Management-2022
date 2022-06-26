@@ -24,6 +24,7 @@
           <td>楼栋信息</td>
           <td>自习室信息</td>
           <td>座位数</td>
+          <td>可预约日期</td>
           <td>可预约时间</td>
         </tr>
       </thead>
@@ -34,7 +35,8 @@
           <td>{{ studyRoom.buildingNumber }}</td>
           <td>{{ studyRoom.classRoomNumber }}</td>
           <td>{{ studyRoom.seatNumber }}</td>
-          <td>{{ to_time(studyRoom.startTime) }}-{{ to_time(studyRoom.endTime + 1) }}</td>
+          <td>{{ to_date(studyRoom.startDate) }} - {{ to_date(studyRoom.endDate) }}</td>
+          <td>{{ to_time(studyRoom.startTime) }} - {{ to_time(studyRoom.endTime + 1) }}</td>
           <td>
             <router-link
               :to="{ name: 'edit_studyroom', params: { studyroom: studyRoom } }"
@@ -135,6 +137,10 @@ export default {
           this.originalStudyRooms = response.data;
         }
       )
+    },
+    to_date(i) {
+      let date = new Date(i * 1000 * 86400)
+      return date.getFullYear() + '.' + (date.getMonth() + 1) + '.' + date.getDate()
     },
     to_time(i) {
       return (i < 10 ? '0' : '') + (i) + ':00';

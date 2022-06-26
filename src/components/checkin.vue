@@ -17,7 +17,7 @@
       <p>预约教室：{{ booking.buildingNumber }} {{ booking.classRoomNumber }}</p>
       <!-- <p>座位号：{{ booking.seatNumber }}</p> -->
       <p>预约时间：{{ new Date(booking.bookTimeStamp * 1000.) }}</p>
-      <p>自习时间：{{ to_time(booking.startTime) }}-{{ to_time(booking.endTime + 1) }}</p>
+      <p>自习时间：{{ to_date(booking.date) }} {{ to_time(booking.startTime) }}-{{ to_time(booking.endTime + 1) }}</p>
 
       <form v-on:submit.prevent="checkin">
         <div class="form-group">
@@ -137,7 +137,11 @@ export default {
     },
     to_time(i) {
       return (i < 10 ? '0' : '') + (i) + ':00';
-    }
+    },
+    to_date(i) {
+      let date = new Date(i * 1000 * 86400)
+      return date.getFullYear() + '.' + (date.getMonth() + 1) + '.' + date.getDate()
+    },
   },
 
   components: {
