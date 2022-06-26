@@ -249,7 +249,9 @@ class RedisDB:
         booked_keys = self.conn.keys(f'book:{userid}:*:*:*:*')
         checkin_keys = self.conn.keys(f'checkin:{userid}:*:*:*:*')
         cancel_keys = self.conn.keys(f'cancel:{userid}:*:*:*:*')
-        self.conn.delete(*(booked_keys + checkin_keys + cancel_keys))
+        allkeys = booked_keys + checkin_keys + cancel_keys
+        if len(allkeys) > 0:
+            self.conn.delete(*(booked_keys + checkin_keys + cancel_keys))
         return True, {}
 
     def init_studyroom(self):
