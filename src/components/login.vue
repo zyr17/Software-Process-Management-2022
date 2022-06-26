@@ -49,7 +49,7 @@
 <script>
 import Notification from "./notifications.vue";
 
-import { backend_link } from "../const.vue";
+import { backend_link, success_proxy_timeout } from "../const.vue";
 import store from "../store";
 
 
@@ -80,11 +80,11 @@ export default {
             if (response.body.role == 'admin')
               setTimeout(() => {
                 this.$router.push('/all_students')
-              }, 1000)
+              }, success_proxy_timeout)
             else if (response.body.role == 'user')
               setTimeout(() => {
                 this.$router.push('/personal_info')
-              }, 1000)
+              }, success_proxy_timeout)
           },
           (response) => {
             this.notifications.push({

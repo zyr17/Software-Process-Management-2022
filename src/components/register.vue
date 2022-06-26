@@ -87,7 +87,7 @@
 <script>
 import Notification from "./notifications.vue";
 
-import { backend_link } from "../const.vue";
+import { backend_link, success_proxy_timeout } from "../const.vue";
 
 
 export default {
@@ -121,7 +121,7 @@ export default {
             });
             setTimeout(() => {
               this.$router.push('/login')
-            }, 1000)
+            }, success_proxy_timeout)
           },
           (response) => {
             this.notifications.push({

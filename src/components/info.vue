@@ -96,7 +96,7 @@
 <script>
 import Notification from "./notifications.vue";
 
-import { backend_link } from "../const.vue";
+import { backend_link, success_proxy_timeout } from "../const.vue";
 import store from '../store';
 
 
@@ -147,7 +147,7 @@ export default {
             });
             setTimeout(() => {
               this.$router.go(0)
-            }, 1000)
+            }, success_proxy_timeout)
           },
           (response) => {
             this.notifications.push({
