@@ -315,15 +315,18 @@ class RedisDB:
         checkin_keys = self.conn.keys(f'checkin:*:{id}:*:*:*')
         combine_keys = booked_keys + checkin_keys
         combine_keys = [x.split(':')[-3:] for x in combine_keys]
-        booked_times = [[int(y) for y in x] for x in combine_keys]
+        combine_times = [[int(y) for y in x] for x in combine_keys]
+        combine_types = ['booked'] * len(booked_keys) \
+            + ['checkin'] * len(checkin_keys)
+        assert len(combine_times) == len(combine_types)
 
         res: List[Dict[str, Union[int, str]]] = []
-        for date, start, end in booked_times:
+        for [date, start, end], type in zip(combine_times, combine_types):
             res.append({
                 'date': date,
                 'startTime': start,
                 'endTime': end,
-                'type': 'booked'
+                'type': type
             })
         res.sort(key = lambda x: x['date'] * 10000 
                                  + x['startTime'] * 100 + x['endTime'])

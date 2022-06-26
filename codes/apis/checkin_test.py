@@ -92,6 +92,25 @@ def test_pos_checkin():
     }, headers = token2header(user2_token))
     assert resp.status_code == 403, resp.json()
 
+    # get all studyroom, book should match
+    resp = client.get('/studyroom', headers = token2header(user1_token))
+    assert resp.status_code == 200, resp.json()
+    assert resp.json() == [ {
+        'id': 0,
+        'buildingNumber': 'building1',
+        'classRoomNumber': 'room1',
+        'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
+        'startTime': 8,
+        'endTime': 18,
+        'book': [
+            { 'date': 20005, 'startTime': 10, 'endTime': 11, 'type': 'booked'},
+            { 'date': 20005, 'startTime': 12, 'endTime': 15, 
+              'type': 'checkin'},
+        ]
+    } ]
+
 
 def test_card_checkin():
     reset_db()
@@ -232,3 +251,33 @@ def test_card_checkin():
         'position': 'building1:room1'
     }, headers = token2header(user1_token))
     assert resp.status_code == 403, resp.json()
+
+    # get all studyroom, book should match
+    resp = client.get('/studyroom', headers = token2header(user1_token))
+    assert resp.status_code == 200, resp.json()
+    assert resp.json() == [ {
+        'id': 0,
+        'buildingNumber': 'building1',
+        'classRoomNumber': 'room1',
+        'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
+        'startTime': 8,
+        'endTime': 18,
+        'book': [
+            { 'date': 20005, 'startTime': 10, 'endTime': 11, 
+              'type': 'checkin'},
+            { 'date': 20005, 'startTime': 12, 'endTime': 15, 
+              'type': 'checkin'},
+        ]
+    }, {
+        'id': 1,
+        'buildingNumber': 'building2',
+        'classRoomNumber': 'room2',
+        'startDate': 20000,
+        'endDate': 20010,
+        'seatNumber': 1,
+        'startTime': 8,
+        'endTime': 18,
+        'book': []
+    }]
