@@ -88,7 +88,7 @@ export default {
           },
           (response) => {
             this.notifications.push({
-              type: "error",
+              type: "danger",
               message: "登录失败 " + response.body.detail.error_msg,
             });
           }

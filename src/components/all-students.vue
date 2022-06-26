@@ -41,7 +41,7 @@
               >修改</router-link
             >
             <button
-              @click="deleteStudent"
+              @click="deleteStudent(student.id)"
               class="btn btn-danger"
               >删除</button
             >
@@ -75,6 +75,7 @@ export default {
         // }
       ],
       studentSearch: "",
+      notifications: []
     };
   },
 
@@ -112,21 +113,25 @@ export default {
         (response) => {}
       );
     },
-    deleteStudent: function () {
+    deleteStudent: function (userid) {
       this.$http
-        .delete(backend_link + "user/" + this.student.stuNum, {
+        .delete(backend_link + "user/" + userid, {
           headers: {
             "Auth-Token": store.state.auth
           },
         })
         .then(
           (response) => {
-            this.$router.push({ name: "all_students" });
+            this.notifications.push({
+              type: "danger",
+              message: "用户删除成功"
+            });
+            this.fetchStudentData()
           },
           (response) => {
             this.notifications.push({
               type: "danger",
-              message: "学生信息无法删除",
+              message: "用户删除失败 " + JSON.stringify(response.body.detail),
             });
           }
         );

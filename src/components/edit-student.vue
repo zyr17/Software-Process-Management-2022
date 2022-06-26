@@ -126,7 +126,7 @@ export default {
           },
           (response) => {
             this.notifications.push({
-              type: "error",
+              type: "danger",
               message: "用户信息" + this.mode_str + "失败",
             });
           }

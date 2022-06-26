@@ -190,7 +190,7 @@ export default {
           },
           (response) => {
             this.notifications.push({
-              type: "error",
+              type: "danger",
               message: "自习室信息" + this.mode_str + "失败 " + 
                        JSON.stringify(response.body.detail),
             });

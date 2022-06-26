@@ -102,7 +102,7 @@ export default {
     register: function () {
       if (this.student.password != this.student.password2) {
         this.notifications.push({
-          type: "error",
+          type: "danger",
           message: "两次密码不一致",
         });
         return;
@@ -125,7 +125,7 @@ export default {
           },
           (response) => {
             this.notifications.push({
-              type: "error",
+              type: "danger",
               message: "学生注册失败 " + response.body.detail.error_msg,
             });
           }

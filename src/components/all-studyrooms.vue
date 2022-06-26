@@ -90,6 +90,7 @@ export default {
         // }
       ],
       studyRoomsSearch: "",
+      notifications: [],
     };
   },
 
@@ -128,14 +129,24 @@ export default {
       )
     },
     del_room(room_id) {
-      this.$http.delete(backend_link + 'studyroom/' + id, {
+      this.$http.delete(backend_link + 'studyroom/' + room_id, {
         headers: {
           'Auth-Token': store.state.auth
         }
       }).then(
-        (response) => {
-          this.originalStudyRooms = response.data;
-        }
+          (response) => {
+            this.notifications.push({
+              type: "success",
+              message: "自习室删除成功",
+            });
+            this.fetch_study_room()
+          }, 
+          (response) => {
+            this.notifications.push({
+              type: "danger",
+              message: "自习室删除失败" + JSON.stringify(response.body.detail),
+            });
+          }
       )
     },
     to_date(i) {

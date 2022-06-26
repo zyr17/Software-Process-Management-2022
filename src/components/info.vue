@@ -128,7 +128,7 @@ export default {
     update_info: function () {
       if (this.student.newPassword != this.student.password2) {
         this.notifications.push({
-          type: "error",
+          type: "danger",
           message: "两次密码不一致",
         });
         return;
@@ -151,7 +151,7 @@ export default {
           },
           (response) => {
             this.notifications.push({
-              type: "error",
+              type: "danger",
               message: "信息更新失败" + JSON.stringify(response.body.detail),
             });
           }

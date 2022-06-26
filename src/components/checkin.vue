@@ -124,14 +124,20 @@ export default {
     },
     cancel () {
       this.$http
-        .delete(backend_link + "position_checkin/" + store.state.id, {
+        .delete(backend_link + "book/" + store.state.id, {
           headers: {
             'Auth-Token': store.state.auth
           },
         })
         .then(
           (response) => {
-            this.$router.push({ name: "history" });
+            this.notifications.push({
+              type: "success",
+              message: "取消成功",
+            });
+            setTimeout(() => {
+              this.$router.push({ name: "history" });
+            }, success_proxy_timeout)
           },
           (response) => {
             this.notifications.push({
