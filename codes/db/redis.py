@@ -4,7 +4,7 @@ from dotenv import load_dotenv, find_dotenv
 import os
 from typing import Literal
 import random
-from typing import Optional
+from typing import Optional, List, Dict
 
 
 load_dotenv(find_dotenv())
@@ -300,12 +300,19 @@ class RedisDB:
         if len(self.conn.keys(f'room:id:{id}')) == 0:
             return False, { 'error_msg': 'room id not exist' }
         info = self.conn.hgetall(f'room:id:{id}')
-        res = []
+
+        booked_keys = self.conn.keys(f'book:*:{id}:*:*')
+        booked_keys = [x.split(':') for x in booked_keys]
+        booked_times = [[int(x[-2]), int(x[-1])] for x in booked_keys]
+
+        res: List[Dict[str, int]] = []
         for t in range(int(info['startTime']), int(info['endTime']) + 1):
             one = { 'time': t, 'emptyNumber': int(info['seatNumber']) }
-            # TODO currently use maximum number, should minus booked number.
+            for st, ed in booked_times:
+                if t >= st and t <= ed:
+                    one['emptyNumber'] -= 1
             res.append(one)
-        return res
+        return True, res
 
     def get_studyroom(self, id: int):
         """
@@ -329,6 +336,9 @@ class RedisDB:
         if len(self.conn.keys(f'room:id:{id}')) == 0:
             return False, { 'error_msg': 'room id not exist' }
         info = self.conn.hgetall(f'room:id:{id}')
+        bookres, book = self._studyroom_book_number(id)
+        if not bookres:
+            return False, { 'error_msg': 'error in _studyroom_book_number' }
         res = {
             'id': int(info['id']),
             'buildingNumber': info['buildingNumber'],
@@ -336,7 +346,7 @@ class RedisDB:
             'seatNumber': int(info['seatNumber']),
             'startTime': int(info['startTime']),
             'endTime': int(info['endTime']),
-            'book': self._studyroom_book_number(id)
+            'book': book
         }
         return True, res
 
@@ -371,18 +381,35 @@ class RedisDB:
         """
         if len(self.conn.keys(f'room:id:{id}')) == 0:
             return False, { 'error_msg': 'room id not exist' }
-        info = self.conn.hgetall(f'room:id:{id}')
+        resp, info = self.get_studyroom(id)
+        if not resp:
+            return False, info
         if buildingNumber is None:
             buildingNumber = info['buildingNumber']
         if classRoomNumber is None:
             classRoomNumber = info['classRoomNumber']
         if seatNumber is None:
             seatNumber = int(info['seatNumber'])
-            # TODO: check seatNumber is big enough!
         if startTime is None:
             startTime = int(info['startTime'])
         if endTime is None:
             endTime = int(info['endTime'])
+
+        # check updated seat number can cover current booking
+        seat_minus = int(info['seatNumber']) - seatNumber
+        current_min_empty = min([x['emptyNumber'] for x in info['book']])
+        if seat_minus > current_min_empty:
+            return False, { 'error_msg': 'some seat has been booked, and '
+                            'change of seat number will make empty seat be '
+                            'minus' }
+        # check updated startTime and endTime can cover current booking
+        booked_time = [x['time'] for x in info['book']
+                       if x['emptyNumber'] != info['seatNumber']]
+        if len(booked_time) and (startTime > min(booked_time) 
+                                 or endTime < max(booked_time)):
+            return False, { 'error_msg': 'start time or end time not cover '
+                            'all booking' }
+
         checkres, checkinfo = self._studyroom_data_check(
             buildingNumber, classRoomNumber, seatNumber, startTime, endTime
         )
@@ -399,4 +426,35 @@ class RedisDB:
             'startTime': startTime,
             'endTime': endTime,
         })
+        return True, {}
+
+    def book(self, userid: int, roomid: int, startTime: int, endTime: int):
+        """
+        user request book for one seat. one book key will save as:
+        book:{userid}:{roomid}:{startTime}:{endTime}
+        value is book unix timestamp.
+
+        if success, return True, {}
+        if fail, return False, { error_msg: str }
+        """
+        if len(self.conn.keys(f'room:id:{roomid}')) == 0:
+            return False, { 'error_msg': 'room id not found' }
+        if len(self.conn.keys(f'account:id:{userid}')) == 0:
+            return False, { 'error_msg': 'user id not found' }
+        if len(self.conn.keys(f'book:{userid}:*')) > 0:
+            return False, { 'error_msg': 'user has an active booking' }
+        if startTime > endTime:
+            return False, { 'error_msg': 'start time large than end time' }
+        _, roominfo = self.get_studyroom(roomid)
+        empty_dict = {}
+        for one in roominfo['book']:
+            empty_dict[one['time']] = one['emptyNumber']
+        for t in range(startTime, endTime + 1):
+            if t not in empty_dict:
+                return False, { 'error_msg': 'time range not match' }
+            if empty_dict[t] <= 0:
+                return False, { 'error_msg': 'not enough empty seat' }
+
+        self.conn.set(f'book:{userid}:{roomid}:{startTime}:{endTime}',
+                      int(time.time()))
         return True, {}
