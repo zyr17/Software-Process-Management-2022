@@ -585,3 +585,49 @@ class RedisDB:
         })
 
         return True, {}
+
+    def card_checkin(self, userid: int, roomid: int):
+        """
+        card checkin, admin should set roomid first, and get userid with
+        slide.
+
+        if success, return True, {
+            userName: str,
+            buildingNum: str,
+            classRoomNum: str,
+            startTime: int,
+            endTime: int
+        }
+        if fail, return False, { error_msg: str }
+        """
+        resp, info = self.get_book(userid)
+        if not resp:
+            return False, info
+        if roomid != info['roomId']:
+            return False, {
+                'error_msg': 'room wrong! you booked'
+                f"{info['buildingNumber']} {info['classRoomNumber']}!"
+            }
+
+        # checkin
+        old_key = (f'book:{userid}:{info["roomId"]}:{info["date"]}:'
+                   f'{info["startTime"]}:{info["endTime"]}')
+        new_key = (f'checkin:{userid}:{info["roomId"]}:{info["date"]}:'
+                   f'{info["startTime"]}:{info["endTime"]}')
+        self.conn.delete(old_key)
+        self.conn.hset(new_key, mapping = {
+            'book': info['bookTimeStamp'],
+            'checkin': int(time.time())
+        })
+        resp, uinfo = self.get_user(userid)
+        if not resp:
+            return False, uinfo
+        userName = uinfo['name']
+
+        return True, {
+            'userName': userName,
+            'buildingNum': info['buildingNumber'],
+            'classRoomNum': info['classRoomNumber'],
+            'startTime': info['startTime'],
+            'endTime': info['endTime']
+        }
