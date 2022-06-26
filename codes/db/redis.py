@@ -300,11 +300,9 @@ class RedisDB:
         })
         return True, {}
 
-    def _studyroom_books(self, id: int):
+    def _studyroom_books_and_checkins(self, id: int):
         """
-        get book number of studyroom.
-
-        TODO: count checkin data here
+        get book and checkin number of studyroom, to count used seats
 
         if success, return True, [ { date: int, startTime: int, endTime: int, 
                                      type: Literal[booked, checkin] } ]
@@ -314,8 +312,10 @@ class RedisDB:
             return False, { 'error_msg': 'room id not exist' }
 
         booked_keys = self.conn.keys(f'book:*:{id}:*:*:*')
-        booked_keys = [x.split(':')[-3:] for x in booked_keys]
-        booked_times = [[int(y) for y in x] for x in booked_keys]
+        checkin_keys = self.conn.keys(f'checkin:*:{id}:*:*:*')
+        combine_keys = booked_keys + checkin_keys
+        combine_keys = [x.split(':')[-3:] for x in combine_keys]
+        booked_times = [[int(y) for y in x] for x in combine_keys]
 
         res: List[Dict[str, Union[int, str]]] = []
         for date, start, end in booked_times:
@@ -351,7 +351,7 @@ class RedisDB:
         if len(self.conn.keys(f'room:id:{id}')) == 0:
             return False, { 'error_msg': 'room id not exist' }
         info = self.conn.hgetall(f'room:id:{id}')
-        bookres, book = self._studyroom_books(id)
+        bookres, book = self._studyroom_books_and_checkins(id)
         if not bookres:
             return False, { 'error_msg': 'error in _studyroom_books' }
         res = {
@@ -556,3 +556,32 @@ class RedisDB:
             'bookTimeStamp': booktime
         }
         return True, res
+
+    def pos_checkin(self, id: int, pos: str):
+        """
+        position checkin. pos is a string, if match `buildingNum:classRoomNum`,
+        can checkin; otherwise return error.
+        if checkin, key prefix book: will change to checkin:, and value will
+        become a hash with { book: int, checkin: int }
+
+        if success, return True, {}
+        if fail, return False, { error_msg: str }
+        """
+        resp, info = self.get_book(id)
+        if not resp:
+            return False, info
+        if pos != info['buildingNumber'] + ':' + info['classRoomNumber']:
+            return False, { 'error_msg': 'position not match' }
+
+        # checkin
+        old_key = (f'book:{id}:{info["roomId"]}:{info["date"]}:'
+                   f'{info["startTime"]}:{info["endTime"]}')
+        new_key = (f'checkin:{id}:{info["roomId"]}:{info["date"]}:'
+                   f'{info["startTime"]}:{info["endTime"]}')
+        self.conn.delete(old_key)
+        self.conn.hset(new_key, mapping = {
+            'book': info['bookTimeStamp'],
+            'checkin': int(time.time())
+        })
+
+        return True, {}
