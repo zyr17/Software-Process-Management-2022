@@ -391,7 +391,7 @@ def test_get_book():
     assert respjson == book2_out
 
 
-def test_cancel():
+def test_cancel_book():
     reset_db()
     add_admin_account()
     add_student_account('stu', 'pass', '')

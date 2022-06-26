@@ -665,3 +665,137 @@ def test_modify_studyroom():
         'startTime': 10,
         'endTime': 10
     }
+
+
+def test_delete_studyroom():
+    reset_db()
+    add_admin_account()
+    add_student_account('stu', 'pass', '')
+    admin_token = get_token(client)
+    user_token = get_token(client, 'stu', 'pass')
+
+    resp = client.post('/studyroom', json = {
+        'buildingNumber': '1',
+        'classRoomNumber': '2',
+        'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
+        'startTime': 8,
+        'endTime': 20
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+    resp = client.post('/studyroom', json = {
+        'buildingNumber': '2',
+        'classRoomNumber': '1',
+        'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
+        'startTime': 8,
+        'endTime': 20
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+
+    # no auth, 422
+    resp = client.delete('/studyroom/0')
+    assert resp.status_code == 422, resp.json()
+    # user auth, 401
+    resp = client.delete('/studyroom/0', headers = token2header(user_token))
+    assert resp.status_code == 401, resp.json()
+    # not exist room, 403
+    resp = client.delete('/studyroom/9', headers = token2header(admin_token))
+    assert resp.status_code == 403, resp.json()
+
+    # make book and checkin
+    resp = client.post('/book/1', json = {
+        'roomId': 0,
+        'date': 20005,
+        'startTime': 12,
+        'endTime': 15
+    }, headers = token2header(user_token))
+    assert resp.status_code == 200, resp.json()
+    resp = client.post('/card_checkin', json = {
+        'roomId': 0,
+        'userId': 1
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+    assert resp.json() == {
+        'userName': 'stu',
+        'buildingNum': '1',
+        'classRoomNum': '2',
+        'date': 20005,
+        'startTime': 12,
+        'endTime': 15
+    }
+    resp = client.post('/book/1', json = {
+        'roomId': 0,
+        'date': 20006,
+        'startTime': 12,
+        'endTime': 15
+    }, headers = token2header(user_token))
+    assert resp.status_code == 200, resp.json()
+
+    # delete success
+    resp = client.delete('/studyroom/0', headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+
+    # book canceled, 404
+    resp = client.get('/book/1', headers = token2header(admin_token))
+    assert resp.status_code == 404, resp.json()
+
+    # cannot book room 0, 403
+    resp = client.post('/book/1', json = {
+        'roomId': 0,
+        'date': 20006,
+        'startTime': 12,
+        'endTime': 15
+    }, headers = token2header(user_token))
+    assert resp.status_code == 403, resp.json()
+
+    # can book room 1
+    resp = client.post('/book/1', json = {
+        'roomId': 1,
+        'date': 20006,
+        'startTime': 12,
+        'endTime': 15
+    }, headers = token2header(user_token))
+    assert resp.status_code == 200, resp.json()
+
+    # add new room
+    resp = client.post('/studyroom', json = {
+        'buildingNumber': 'building2',
+        'classRoomNumber': 'room2',
+        'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
+        'startTime': 8,
+        'endTime': 20
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+
+    # get room information, should not contain room 0, new room is 2
+    resp = client.get('/studyroom', headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+    assert resp.json() == [ {
+        'id': 1,
+        'buildingNumber': '2',
+        'classRoomNumber': '1',
+        'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
+        'startTime': 8,
+        'endTime': 20,
+        'book': [
+            { 'date': 20006, 'startTime': 12, 'endTime': 15, 'type': 'booked'},
+        ]
+    }, {
+        'id': 2,
+        'buildingNumber': 'building2',
+        'classRoomNumber': 'room2',
+        'startDate': 20000,
+        'endDate': 20010,
+        'seatNumber': 1,
+        'startTime': 8,
+        'endTime': 20,
+        'book': []
+    }]
+

@@ -88,3 +88,15 @@ def modify_studyroom(id: int, data: modify_studyroom_post,
             detail = info
         )
     return info
+
+
+@router.delete('/studyroom/{id}')
+def delete_studyroom(id: int, auth_token: str = Header()):
+    check_auth_token(auth_token, True)
+    resp, info = db.delete_studyroom(id)
+    if not resp:
+        raise HTTPException(
+            status_code = 403,
+            detail = info
+        )
+    return info

@@ -473,6 +473,28 @@ class RedisDB:
         })
         return True, {}
 
+    def delete_studyroom(self, roomid: int):
+        """
+        delete a study room. all connected information, include booking,
+        checkin, cancel history will be automatically removed. although
+        deleted, room id counter will not change.
+
+        if success, return True, {}
+        if fail, return False, { error_msg: str }
+        """
+        resp, info = self.get_studyroom(roomid)
+        if not resp:
+            return False, info
+        self.conn.delete(
+            f'room:id:{roomid}',
+            f'room:name:{info["buildingNumber"]}:{info["classRoomNumber"]}'
+        )
+        booked_keys = self.conn.keys(f'book:*:{roomid}:*:*:*')
+        checkin_keys = self.conn.keys(f'checkin:*:{roomid}:*:*:*')
+        cancel_keys = self.conn.keys(f'cancel:*:{roomid}:*:*:*')
+        self.conn.delete(*(booked_keys + checkin_keys + cancel_keys))
+        return True, {}
+
     def book(self, userid: int, roomId: int, date: int, startTime: int, 
              endTime: int):
         """
