@@ -59,54 +59,55 @@
 import Notification from "./notifications.vue";
 
 import { backend_link } from "../const.vue";
+import store from '../store';
 
 
 export default {
   data() {
     return {
       originalStudyRooms: [
-        {
-          id: 1,
-          buildingNumber: 'JB',
-          classRoomNumber: 'JB101',
-          startTime: 18,
-          endTime: 22,
-          seatNumber: 1,
-          book: [
-            { time: 18, emptyNumber: 1 },
-            { time: 19, emptyNumber: 1 },
-            { time: 20, emptyNumber: 0 },
-            { time: 21, emptyNumber: 0 },
-            { time: 22, emptyNumber: 1 },
-          ]
-        },
-        {
-          id: 1,
-          buildingNumber: 'JB',
-          classRoomNumber: 'JB102',
-          startTime: 6,
-          endTime: 9,
-          seatNumber: 1,
-          book: [
-            { time: 6, emptyNumber: 1 },
-            { time: 7, emptyNumber: 1 },
-            { time: 8, emptyNumber: 0 },
-            { time: 9, emptyNumber: 1 },
-          ]
-        },
-        {
-          id: 2,
-          buildingNumber: 'JA',
-          classRoomNumber: 'JA202',
-          startTime: 10,
-          endTime: 12,
-          seatNumber: 2,
-          book: [
-            { time: 10, emptyNumber: 2 },
-            { time: 11, emptyNumber: 1 },
-            { time: 12, emptyNumber: 0 },
-          ]
-        }
+        // {
+        //   id: 1,
+        //   buildingNumber: 'JB',
+        //   classRoomNumber: 'JB101',
+        //   startTime: 18,
+        //   endTime: 22,
+        //   seatNumber: 1,
+        //   book: [
+        //     { time: 18, emptyNumber: 1 },
+        //     { time: 19, emptyNumber: 1 },
+        //     { time: 20, emptyNumber: 0 },
+        //     { time: 21, emptyNumber: 0 },
+        //     { time: 22, emptyNumber: 1 },
+        //   ]
+        // },
+        // {
+        //   id: 1,
+        //   buildingNumber: 'JB',
+        //   classRoomNumber: 'JB102',
+        //   startTime: 6,
+        //   endTime: 9,
+        //   seatNumber: 1,
+        //   book: [
+        //     { time: 6, emptyNumber: 1 },
+        //     { time: 7, emptyNumber: 1 },
+        //     { time: 8, emptyNumber: 0 },
+        //     { time: 9, emptyNumber: 1 },
+        //   ]
+        // },
+        // {
+        //   id: 2,
+        //   buildingNumber: 'JA',
+        //   classRoomNumber: 'JA202',
+        //   startTime: 10,
+        //   endTime: 12,
+        //   seatNumber: 2,
+        //   book: [
+        //     { time: 10, emptyNumber: 2 },
+        //     { time: 11, emptyNumber: 1 },
+        //     { time: 12, emptyNumber: 0 },
+        //   ]
+        // }
       ],
       selectedBuilding: '',
       selectedClassroom: '',
@@ -154,11 +155,25 @@ export default {
   },
 
   created: function () {
-    this.$http.get(backend_link + 'current_booking').then(
+    this.$http.get(backend_link + 'current_booking', {
+      headers: {
+        'Auth-Token': store.state.auth
+      }
+    }).then(
       (response) => {
         let data = response.data;
         this.is_booked = data.is_booked;
         if (data.is_booked) this.booking = data.booking;
+      }
+    )
+    this.$http.get(backend_link + 'studyroom', {
+      headers: {
+        'Auth-Token': store.state.auth
+      }
+    }).then(
+      (response) => {
+        let data = response.data;
+        this.originalStudyRooms = data;
       }
     )
   },
