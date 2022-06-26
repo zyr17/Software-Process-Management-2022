@@ -2,7 +2,6 @@ from fastapi.testclient import TestClient
 from pytest_utils import (reset_db, add_admin_account, add_student_account, 
                           get_token, token2header)
 from main import app
-import time
 
 
 client = TestClient(app)
@@ -19,6 +18,8 @@ def test_create_studyroom():
     resp = client.post('/studyroom', json = {
         'buildingNumber': 'building1',
         'classRoomNumber': 'room1',
+        'startDate': 20000,
+        'endDate': 20010,
         'seatNumber': 1,
         'startTime': 8,
         'endTime': 18
@@ -29,6 +30,8 @@ def test_create_studyroom():
     resp = client.post('/studyroom', json = {
         'classRoomNumber': 'room1',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 18
     }, headers = token2header(admin_token))
@@ -36,6 +39,8 @@ def test_create_studyroom():
     resp = client.post('/studyroom', json = {
         'buildingNumber': 'building1',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 18
     }, headers = token2header(admin_token))
@@ -43,6 +48,8 @@ def test_create_studyroom():
     resp = client.post('/studyroom', json = {
         'buildingNumber': 'building1',
         'classRoomNumber': 'room1',
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 18
     }, headers = token2header(admin_token))
@@ -51,6 +58,8 @@ def test_create_studyroom():
         'buildingNumber': 'building1',
         'classRoomNumber': 'room1',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'endTime': 18
     }, headers = token2header(admin_token))
     assert resp.status_code == 422, resp.json()
@@ -58,6 +67,8 @@ def test_create_studyroom():
         'buildingNumber': 'building1',
         'classRoomNumber': 'room1',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
     }, headers = token2header(admin_token))
     assert resp.status_code == 422, resp.json()
@@ -73,6 +84,8 @@ def test_create_studyroom():
         'buildingNumber': 'building1',
         'classRoomNumber': 'room1',
         'seatNumber': 0,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 18
     }, headers = token2header(admin_token))
@@ -81,6 +94,8 @@ def test_create_studyroom():
         'buildingNumber': 'building1',
         'classRoomNumber': 'room1',
         'seatNumber': -10,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 18
     }, headers = token2header(admin_token))
@@ -89,6 +104,8 @@ def test_create_studyroom():
         'buildingNumber': 'building1',
         'classRoomNumber': 'room1',
         'seatNumber': 'hahaha',
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 18
     }, headers = token2header(admin_token))
@@ -99,6 +116,8 @@ def test_create_studyroom():
         'buildingNumber': 'building1',
         'classRoomNumber': 'room1',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': -10,
         'endTime': 18
     }, headers = token2header(admin_token))
@@ -107,6 +126,8 @@ def test_create_studyroom():
         'buildingNumber': 'building1',
         'classRoomNumber': 'room1',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 24,
         'endTime': 18
     }, headers = token2header(admin_token))
@@ -115,6 +136,8 @@ def test_create_studyroom():
         'buildingNumber': 'building1',
         'classRoomNumber': 'room1',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 'xxx',
         'endTime': 18
     }, headers = token2header(admin_token))
@@ -125,6 +148,8 @@ def test_create_studyroom():
         'buildingNumber': 'building1',
         'classRoomNumber': 'room1',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': -10
     }, headers = token2header(admin_token))
@@ -133,6 +158,8 @@ def test_create_studyroom():
         'buildingNumber': 'building1',
         'classRoomNumber': 'room1',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 30
     }, headers = token2header(admin_token))
@@ -141,16 +168,96 @@ def test_create_studyroom():
         'buildingNumber': 'building1',
         'classRoomNumber': 'room1',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 'yyy'
     }, headers = token2header(admin_token))
     assert resp.status_code == 422, resp.json()
+
+    # startDate invalid 403, type wrong 422
+    resp = client.post('/studyroom', json = {
+        'buildingNumber': 'building1',
+        'classRoomNumber': 'room1',
+        'seatNumber': 1,
+        'startDate': -1,
+        'endDate': 20010,
+        'startTime': 8,
+        'endTime': 18
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 403, resp.json()
+    resp = client.post('/studyroom', json = {
+        'buildingNumber': 'building1',
+        'classRoomNumber': 'room1',
+        'seatNumber': 1,
+        'startDate': 999999,
+        'endDate': 20010,
+        'startTime': 8,
+        'endTime': 18
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 403, resp.json()
+    resp = client.post('/studyroom', json = {
+        'buildingNumber': 'building1',
+        'classRoomNumber': 'room1',
+        'seatNumber': 1,
+        'startDate': 'aaa',
+        'endDate': 20010,
+        'startTime': 8,
+        'endTime': 18
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 422, resp.json()
+
+    # startDate invalid 403, type wrong 422
+    resp = client.post('/studyroom', json = {
+        'buildingNumber': 'building1',
+        'classRoomNumber': 'room1',
+        'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': -1000000000,
+        'startTime': 8,
+        'endTime': 18
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 403, resp.json()
+    resp = client.post('/studyroom', json = {
+        'buildingNumber': 'building1',
+        'classRoomNumber': 'room1',
+        'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 1010101010,
+        'startTime': 8,
+        'endTime': 18
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 403, resp.json()
+    resp = client.post('/studyroom', json = {
+        'buildingNumber': 'building1',
+        'classRoomNumber': 'room1',
+        'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 'bbb',
+        'startTime': 8,
+        'endTime': 18
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 422, resp.json()
+
+    # start date later than end date, 403
+    resp = client.post('/studyroom', json = {
+        'buildingNumber': 'building1',
+        'classRoomNumber': 'room1',
+        'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 19000,
+        'startTime': 8,
+        'endTime': 18
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 403, resp.json()
 
     # start time later than end time, 403
     resp = client.post('/studyroom', json = {
         'buildingNumber': 'building1',
         'classRoomNumber': 'room1',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 4
     }, headers = token2header(admin_token))
@@ -161,6 +268,8 @@ def test_create_studyroom():
         'buildingNumber': 'building1',
         'classRoomNumber': 'room1',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 20
     }, headers = token2header(user_token))
@@ -171,6 +280,8 @@ def test_create_studyroom():
         'buildingNumber': 'building:1',
         'classRoomNumber': 'room1',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 20
     }, headers = token2header(admin_token))
@@ -179,6 +290,8 @@ def test_create_studyroom():
         'buildingNumber': 'building1',
         'classRoomNumber': 'room:1',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 20
     }, headers = token2header(admin_token))
@@ -189,6 +302,8 @@ def test_create_studyroom():
         'buildingNumber': '',
         'classRoomNumber': 'room1',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 20
     }, headers = token2header(admin_token))
@@ -197,6 +312,8 @@ def test_create_studyroom():
         'buildingNumber': 'building1',
         'classRoomNumber': '',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 20
     }, headers = token2header(admin_token))
@@ -207,6 +324,8 @@ def test_create_studyroom():
         'buildingNumber': 'building1',
         'classRoomNumber': 'room1',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 20
     }, headers = token2header(admin_token))
@@ -217,6 +336,8 @@ def test_create_studyroom():
         'buildingNumber': 'building2',
         'classRoomNumber': 'room2',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 20
     }, headers = token2header(admin_token))
@@ -227,6 +348,8 @@ def test_create_studyroom():
         'buildingNumber': 'building1',
         'classRoomNumber': 'room2',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 20
     }, headers = token2header(admin_token))
@@ -237,6 +360,8 @@ def test_create_studyroom():
         'buildingNumber': 'building1',
         'classRoomNumber': 'room1',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 20
     }, headers = token2header(admin_token))
@@ -254,6 +379,8 @@ def test_get_studyroom_information():
         'buildingNumber': 'building1',
         'classRoomNumber': 'room1',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 20
     }
@@ -261,6 +388,8 @@ def test_get_studyroom_information():
         'buildingNumber': 'building2',
         'classRoomNumber': 'room2',
         'seatNumber': 2,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 18,
         'endTime': 22
     }
@@ -272,15 +401,9 @@ def test_get_studyroom_information():
 
     room0_out = room0.copy()
     room1_out = room1.copy()
-    room0_out['book'] = [
-        { 'time': x, 'emptyNumber': room0['seatNumber']}
-        for x in range(room0['startTime'], room0['endTime'] + 1)
-    ]
+    room0_out['book'] = []
     room0_out['id'] = 0
-    room1_out['book'] = [
-        { 'time': x, 'emptyNumber': room1['seatNumber']}
-        for x in range(room1['startTime'], room1['endTime'] + 1)
-    ]
+    room1_out['book'] = []
     room1_out['id'] = 1
 
     # no auth token, 422
@@ -324,6 +447,8 @@ def test_get_all_studyroom_information():
             'buildingNumber': 'building1',
             'classRoomNumber': 'room1',
             'seatNumber': 1,
+            'startDate': 20000,
+            'endDate': 20010,
             'startTime': 8,
             'endTime': 20
         },
@@ -331,6 +456,8 @@ def test_get_all_studyroom_information():
             'buildingNumber': 'building2',
             'classRoomNumber': 'room2',
             'seatNumber': 2,
+            'startDate': 20000,
+            'endDate': 20010,
             'startTime': 18,
             'endTime': 22
         },
@@ -338,16 +465,15 @@ def test_get_all_studyroom_information():
             'buildingNumber': 'building1',
             'classRoomNumber': 'room2',
             'seatNumber': 10,
+            'startDate': 20000,
+            'endDate': 20010,
             'startTime': 6,
             'endTime': 23
         },
     ]
     rooms_out = [x.copy() for x in rooms]
     for num, room in enumerate(rooms_out):
-        room['book'] = [
-            { 'time': x, 'emptyNumber': room['seatNumber']}
-            for x in range(room['startTime'], room['endTime'] + 1)
-        ]
+        room['book'] = []
         room['id'] = num
     rooms_current = []
 
@@ -388,6 +514,8 @@ def test_modify_studyroom():
         'buildingNumber': 'building1',
         'classRoomNumber': 'room1',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 20
     }, headers = token2header(admin_token))
@@ -395,6 +523,8 @@ def test_modify_studyroom():
         'buildingNumber': 'building2',
         'classRoomNumber': 'room2',
         'seatNumber': 1,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 8,
         'endTime': 20
     }, headers = token2header(admin_token))
@@ -426,6 +556,12 @@ def test_modify_studyroom():
         'classRoomNumber': '',
     }, headers = token2header(admin_token))
     assert resp.status_code == 403, resp.json()
+    # change to exist room name, 403
+    resp = client.put('/studyroom/0', json = {
+        'buildingNumber': 'building2',
+        'classRoomNumber': 'room2',
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 403, resp.json()
     # only change endtime and time error
     resp = client.put('/studyroom/0', json = {
         'endTime': -1
@@ -439,12 +575,27 @@ def test_modify_studyroom():
         'endTime': 1
     }, headers = token2header(admin_token))
     assert resp.status_code == 403, resp.json()
+    # only change enddate and date error
+    resp = client.put('/studyroom/0', json = {
+        'endDate': -1
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 403, resp.json()
+    resp = client.put('/studyroom/0', json = {
+        'endDate': 300000
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 403, resp.json()
+    resp = client.put('/studyroom/0', json = {
+        'endDate': 19000
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 403, resp.json()
 
     # successfully change all field
     resp = client.put('/studyroom/0', json = {
         'buildingNumber': 'mod0',
         'classRoomNumber': 'mod0',
         'seatNumber': 2,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 10,
         'endTime': 22
     }, headers = token2header(admin_token))
@@ -459,13 +610,42 @@ def test_modify_studyroom():
         'buildingNumber': 'mod0',
         'classRoomNumber': 'mod0',
         'seatNumber': 2,
+        'startDate': 20000,
+        'endDate': 20010,
+        'startTime': 10,
+        'endTime': 22
+    }
+
+    # successfully send change, although nothing really changed
+    resp = client.put('/studyroom/0', json = {
+        'buildingNumber': 'mod0',
+        'classRoomNumber': 'mod0',
+        'seatNumber': 2,
+        'startDate': 20000,
+        'endDate': 20010,
+        'startTime': 10,
+        'endTime': 22
+    }, headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+    resp = client.get('/studyroom/0', 
+                      headers = token2header(admin_token))
+    assert resp.status_code == 200, resp.json()
+    resp = resp.json()
+    del resp['book']
+    assert resp == {
+        'id': 0,
+        'buildingNumber': 'mod0',
+        'classRoomNumber': 'mod0',
+        'seatNumber': 2,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 10,
         'endTime': 22
     }
 
     # change part of field
     resp = client.put('/studyroom/0', json = {
-        'buildingNumber': 'mod01',
+        'buildingNumber': 'building2',
         'seatNumber': 20,
         'endTime': 10
     }, headers = token2header(admin_token))
@@ -477,11 +657,11 @@ def test_modify_studyroom():
     del resp['book']
     assert resp == {
         'id': 0,
-        'buildingNumber': 'mod01',
+        'buildingNumber': 'building2',
         'classRoomNumber': 'mod0',
         'seatNumber': 20,
+        'startDate': 20000,
+        'endDate': 20010,
         'startTime': 10,
         'endTime': 10
     }
-
-    # TODO when booking done, change seatNumber code should check

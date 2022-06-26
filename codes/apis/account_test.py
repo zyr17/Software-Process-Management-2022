@@ -407,6 +407,18 @@ def test_modify_user():
            == { 'id': 2, 'name': 'mod2', 'stuNum': 'mod2', 'role': 'user' }
     resp = client.post('/login', json = { 'name': 'mod2', 'password': 'mod2' })
     assert resp.status_code == 200, resp.json()
+    # user successully sent change, although nothing really changed
+    resp = client.put('/user/2', json = {
+        'name': 'mod2',
+        'stuNum': 'mod2',
+        'currentPassword': 'mod2',
+        'newPassword': 'mod2'
+    }, headers = token2header(stu2_token))
+    assert resp.status_code == 200, resp.json()
+    assert client.get('/user/2', headers = token2header(admin_token)).json() \
+           == { 'id': 2, 'name': 'mod2', 'stuNum': 'mod2', 'role': 'user' }
+    resp = client.post('/login', json = { 'name': 'mod2', 'password': 'mod2' })
+    assert resp.status_code == 200, resp.json()
     # user change successful with partial information change
     resp = client.put('/user/1', json = {
         'stuNum': 'mod1',

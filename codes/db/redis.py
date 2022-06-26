@@ -4,7 +4,7 @@ from dotenv import load_dotenv, find_dotenv
 import os
 from typing import Literal
 import random
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Union
 
 
 load_dotenv(find_dotenv())
@@ -238,7 +238,8 @@ class RedisDB:
             self.conn.set('room:counter', 0) 
 
     def _studyroom_data_check(self, buildingNumber: str, classRoomNumber: str, 
-                              seatNumber: int, startTime: int, endTime: int):
+                              seatNumber: int, startDate: int, endDate: int, 
+                              startTime: int, endTime: int):
         """
         check if studyroom data is valid, used in create and modify.
         BASIC check, advanced rules such as seatNumber vs. current booking is
@@ -257,10 +258,16 @@ class RedisDB:
             return False, { 'error_msg': 'start or end time not in range' }
         if startTime > endTime:
             return False, { 'error_msg': 'start time later than end time' }
+        if startDate < 0 or startDate > 99999 \
+           or endDate < 0 or endDate > 99999:
+            return False, { 'error_msg': 'start or end date not in range' }
+        if startDate > endDate:
+            return False, { 'error_msg': 'start date later than end date' }
         return True, {}
 
     def create_studyroom(self, buildingNumber: str, classRoomNumber: str, 
-                         seatNumber: int, startTime: int, endTime: int):
+                         seatNumber: int, startDate: int, endDate: int, 
+                         startTime: int, endTime: int):
         """
         create new studyroom. will use room:counter as its id and increment
         counter.
@@ -272,7 +279,8 @@ class RedisDB:
                 f'room:name:{buildingNumber}:{classRoomNumber}') is not None:
             return False, { 'error_msg': 'duplicate classroom' }
         checkres, info = self._studyroom_data_check(
-            buildingNumber, classRoomNumber, seatNumber, startTime, endTime
+            buildingNumber, classRoomNumber, seatNumber, startDate, endDate, 
+            startTime, endTime
         )
         if not checkres:
             return False, info
@@ -285,33 +293,40 @@ class RedisDB:
             'buildingNumber': buildingNumber,
             'classRoomNumber': classRoomNumber,
             'seatNumber': seatNumber,
+            'startDate': startDate,
+            'endDate': endDate,
             'startTime': startTime,
             'endTime': endTime,
         })
         return True, {}
 
-    def _studyroom_book_number(self, id: int):
+    def _studyroom_books(self, id: int):
         """
         get book number of studyroom.
 
-        if success, return True, [ { time: int, emptyNumber: int } ]
+        TODO: count checkin data here
+
+        if success, return True, [ { date: int, startTime: int, endTime: int, 
+                                     type: Literal[booked, checkin] } ]
         if fail, return False, { error_msg: str }
         """
         if len(self.conn.keys(f'room:id:{id}')) == 0:
             return False, { 'error_msg': 'room id not exist' }
-        info = self.conn.hgetall(f'room:id:{id}')
 
-        booked_keys = self.conn.keys(f'book:*:{id}:*:*')
-        booked_keys = [x.split(':') for x in booked_keys]
-        booked_times = [[int(x[-2]), int(x[-1])] for x in booked_keys]
+        booked_keys = self.conn.keys(f'book:*:{id}:*:*:*')
+        booked_keys = [x.split(':')[-3:] for x in booked_keys]
+        booked_times = [[int(y) for y in x] for x in booked_keys]
 
-        res: List[Dict[str, int]] = []
-        for t in range(int(info['startTime']), int(info['endTime']) + 1):
-            one = { 'time': t, 'emptyNumber': int(info['seatNumber']) }
-            for st, ed in booked_times:
-                if t >= st and t <= ed:
-                    one['emptyNumber'] -= 1
-            res.append(one)
+        res: List[Dict[str, Union[int, str]]] = []
+        for date, start, end in booked_times:
+            res.append({
+                'date': date,
+                'startTime': start,
+                'endTime': end,
+                'type': 'booked'
+            })
+        res.sort(key = lambda x: x['date'] * 10000 
+                                 + x['startTime'] * 100 + x['endTime'])
         return True, res
 
     def get_studyroom(self, id: int):
@@ -323,27 +338,29 @@ class RedisDB:
             buildingNumber: str, 
             classRoomNumber: str, 
             searNumber: int, 
+            startDate: int, 
+            endDate: int,
             startTime: int, 
             endTime: int,
             book: [
-                { time: int, emptyNumber: int }
+                { date: int, startTime: int, endTime: int } ...
             ]
-        }
-            here book contains emptyNumber of seats in this studyroom and time,
-            startTime <= time <= endTime.
+        } book contains current booking and checkin information of the room
         if fail, return False, { error_msg: str }
         """
         if len(self.conn.keys(f'room:id:{id}')) == 0:
             return False, { 'error_msg': 'room id not exist' }
         info = self.conn.hgetall(f'room:id:{id}')
-        bookres, book = self._studyroom_book_number(id)
+        bookres, book = self._studyroom_books(id)
         if not bookres:
-            return False, { 'error_msg': 'error in _studyroom_book_number' }
+            return False, { 'error_msg': 'error in _studyroom_books' }
         res = {
             'id': int(info['id']),
             'buildingNumber': info['buildingNumber'],
             'classRoomNumber': info['classRoomNumber'],
             'seatNumber': int(info['seatNumber']),
+            'startDate': int(info['startDate']),
+            'endDate': int(info['endDate']),
             'startTime': int(info['startTime']),
             'endTime': int(info['endTime']),
             'book': book
@@ -371,6 +388,7 @@ class RedisDB:
     def modify_studyroom(
             self, id: int, buildingNumber: Optional[str], 
             classRoomNumber: Optional[str], seatNumber: Optional[int], 
+            startDate: Optional[int], endDate: Optional[int],
             startTime: Optional[int], endTime: Optional[int]):
         """
         modify studyroom information. if seatNumber is modified, will check
@@ -384,34 +402,56 @@ class RedisDB:
         resp, info = self.get_studyroom(id)
         if not resp:
             return False, info
+        if buildingNumber is not None and classRoomNumber is not None:
+            if (info['buildingNumber'] != buildingNumber 
+                    or info['classRoomNumber'] != classRoomNumber):
+                key = f'room:name:{buildingNumber}:{classRoomNumber}'
+                if len(self.conn.keys(key)) != 0:
+                    return False, { 'error_message': 'duplicate room name' }
         if buildingNumber is None:
             buildingNumber = info['buildingNumber']
         if classRoomNumber is None:
             classRoomNumber = info['classRoomNumber']
         if seatNumber is None:
             seatNumber = int(info['seatNumber'])
+        if startDate is None:
+            startDate = int(info['startDate'])
+        if endDate is None:
+            endDate = int(info['endDate'])
         if startTime is None:
             startTime = int(info['startTime'])
         if endTime is None:
             endTime = int(info['endTime'])
 
         # check updated seat number can cover current booking
-        seat_minus = int(info['seatNumber']) - seatNumber
-        current_min_empty = min([x['emptyNumber'] for x in info['book']])
-        if seat_minus > current_min_empty:
+        booked_dict = { 0: 0 }  # put a zero as default min
+        for b in info['book']:
+            for t in range(b['startTime'], b['endTime'] + 1):
+                idx = b['date'] * 100 + t
+                if idx not in booked_dict:
+                    booked_dict[idx] = 0
+                booked_dict[idx] += 1
+        current_max = max([v for k, v in booked_dict.items()])
+        if seatNumber < current_max:
             return False, { 'error_msg': 'some seat has been booked, and '
                             'change of seat number will make empty seat be '
                             'minus' }
         # check updated startTime and endTime can cover current booking
-        booked_time = [x['time'] for x in info['book']
-                       if x['emptyNumber'] != info['seatNumber']]
-        if len(booked_time) and (startTime > min(booked_time) 
-                                 or endTime < max(booked_time)):
+        book_start = [x['startTime'] for x in info['book']]
+        book_end = [x['endTime'] for x in info['book']]
+        if len(info['book']) and (startTime > min(book_start) 
+                                  or endTime < max(book_end)):
             return False, { 'error_msg': 'start time or end time not cover '
+                            'all booking' }
+        book_date = [x['date'] for x in info['book']]
+        if len(info['book']) and (startDate > min(book_date)
+                                  or endDate < max(book_date)):
+            return False, { 'error_msg': 'start date or end date not cover '
                             'all booking' }
 
         checkres, checkinfo = self._studyroom_data_check(
-            buildingNumber, classRoomNumber, seatNumber, startTime, endTime
+            buildingNumber, classRoomNumber, seatNumber, startDate, endDate, 
+            startTime, endTime
         )
         if not checkres:
             return False, checkinfo
@@ -423,15 +463,18 @@ class RedisDB:
             'buildingNumber': buildingNumber,
             'classRoomNumber': classRoomNumber,
             'seatNumber': seatNumber,
+            'startDate': startDate,
+            'endDate': endDate,
             'startTime': startTime,
             'endTime': endTime,
         })
         return True, {}
 
-    def book(self, userid: int, roomId: int, startTime: int, endTime: int):
+    def book(self, userid: int, roomId: int, date: int, startTime: int, 
+             endTime: int):
         """
         user request book for one seat. one book key will save as:
-        book:{userid}:{roomId}:{startTime}:{endTime}
+        book:{userid}:{roomId}:{date}:{startTime}:{endTime}
         value is book unix timestamp.
 
         if success, return True, {}
@@ -446,16 +489,22 @@ class RedisDB:
         if startTime > endTime:
             return False, { 'error_msg': 'start time large than end time' }
         _, roominfo = self.get_studyroom(roomId)
-        empty_dict = {}
+        if date < roominfo['startDate'] or date > roominfo['endDate']:
+            return False, { 'error_msg': 'date range not match' }
+        booked_dict = {}  # count today's booked number for every time
         for one in roominfo['book']:
-            empty_dict[one['time']] = one['emptyNumber']
+            if one['date'] == date:
+                for t in range(one['startTime'], one['endTime'] + 1):
+                    if t not in booked_dict:
+                        booked_dict[t] = 0
+                    booked_dict[t] += 1
         for t in range(startTime, endTime + 1):
-            if t not in empty_dict:
+            if t < roominfo['startTime'] or t > roominfo['endTime']:
                 return False, { 'error_msg': 'time range not match' }
-            if empty_dict[t] <= 0:
+            if t in booked_dict and booked_dict[t] >= roominfo['seatNumber']:
                 return False, { 'error_msg': 'not enough empty seat' }
 
-        self.conn.set(f'book:{userid}:{roomId}:{startTime}:{endTime}',
+        self.conn.set(f'book:{userid}:{roomId}:{date}:{startTime}:{endTime}',
                       int(time.time()))
         return True, {}
 
@@ -478,6 +527,7 @@ class RedisDB:
             roomId: int,
             buildingNumber: str,
             classRoomNumber: str,
+            date: int,
             startTime: int,
             endTime: int,
             bookTimeStamp: int
@@ -492,7 +542,7 @@ class RedisDB:
         key = self.conn.keys(f'book:{userid}:*')[0]
         booktime = self.conn.get(key)
         key = key.split(':')
-        roomId, startTime, endTime = [int(x) for x in key[2:]]
+        roomId, date, startTime, endTime = [int(x) for x in key[2:]]
         resp, info = self.get_studyroom(roomId)
         if not resp:
             return False, info
@@ -500,6 +550,7 @@ class RedisDB:
             'roomId': roomId,
             'buildingNumber': info['buildingNumber'],
             'classRoomNumber': info['classRoomNumber'],
+            'date': date,
             'startTime': startTime,
             'endTime': endTime,
             'bookTimeStamp': booktime
