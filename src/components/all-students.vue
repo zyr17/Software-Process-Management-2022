@@ -123,7 +123,7 @@ export default {
         .then(
           (response) => {
             store.commit('setNotification', {
-              type: "danger",
+              type: "success",
               message: "用户删除成功"
             });
             this.fetchStudentData()
