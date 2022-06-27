@@ -18,3 +18,24 @@ def history_get(userid: int, auth_token: str = Header()):
             detail = info
         )
     return info
+
+
+class history_delete(BaseModel):
+    roomId: int
+    date: int
+    startTime: int
+    endTime: int
+
+
+@router.delete('/history/{userid}')
+def history_delete_func(userid: int, data: history_delete, 
+                        auth_token: str = Header()):
+    check_auth_token(auth_token, False, userid)
+    resp, info = db.delete_history(userid, data.roomId, data.date, 
+                                   data.startTime, data.endTime)
+    if not resp:
+        raise HTTPException(
+            status_code = 403,
+            detail = info
+        )
+    return info

@@ -565,8 +565,16 @@ class RedisDB:
             if t in booked_dict and booked_dict[t] >= roominfo['seatNumber']:
                 return False, { 'error_msg': 'not enough empty seat' }
 
-        self.conn.set(f'book:{userid}:{roomId}:{date}:{startTime}:{endTime}',
-                      int(time.time()))
+        key = f'book:{userid}:{roomId}:{date}:{startTime}:{endTime}'
+        if len(self.conn.keys('checkin' + key[4:])) > 0:
+            # this user has checkin same room same time before, reject
+            return False, { 
+                'error_msg': 'you have booked this room this time before' }
+        if len(self.conn.keys('cancel' + key[4:])) > 0:
+            # book cancelled data, delete cancelled history
+            self.conn.delete('cancel' + key[4:])
+
+        self.conn.set(key, int(time.time()))
         return True, {}
 
     def is_booked(self, userid: int):
@@ -787,3 +795,22 @@ class RedisDB:
         # sort descend by bookTimeStamp
         results.sort(key = lambda x: -x['bookTimeStamp'])
         return True, results
+
+    def delete_history(self, userid: int, roomid: int, date: int, 
+                       startTime: int, endTime: int):
+        """
+        delete a history.
+
+        if success, return True, {}
+        if fail, return False, { error_msg: str }
+        """
+        keys = self.conn.keys(
+            f'*:{userid}:{roomid}:{date}:{startTime}:{endTime}')
+        if len(keys) == 0:
+            return False, { 'error_msg': 'not found' }
+        key = keys[0]
+        if key[:4] == 'book':
+            return False, { 
+                'error_msg': 'cannot delete book with delete history' }
+        self.conn.delete(key)
+        return True, {}

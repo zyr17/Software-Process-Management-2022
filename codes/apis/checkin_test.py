@@ -74,6 +74,15 @@ def test_pos_checkin():
     }, headers = token2header(user1_token))
     assert resp.status_code == 403, resp.json()
 
+    # after checkin, cannot book same, 403
+    resp = client.post('/book/1', json = {
+        'roomId': 0,
+        'date': 20005,
+        'startTime': 12,
+        'endTime': 15
+    }, headers = token2header(user1_token))
+    assert resp.status_code == 403, resp.json()
+
     # after checkin, user can book again
     resp = client.post('/book/1', json = {
         'roomId': 0,

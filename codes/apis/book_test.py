@@ -467,8 +467,24 @@ def test_cancel_book():
     # admin cancel user2
     resp = client.delete('/book/2', headers = token2header(admin_token))
     assert resp.status_code == 200, resp.json()
+    # double cancel, 404
+    resp = client.delete('/book/2', headers = token2header(admin_token))
+    assert resp.status_code == 404, resp.json()
 
     # user1 can book
+    resp = client.post('/book/1', json = {
+        'roomId': 0,
+        'date': 20005,
+        'startTime': 11,
+        'endTime': 16
+    }, headers = token2header(user1_token))
+    assert resp.status_code == 200, resp.json()
+
+    # user cancel
+    resp = client.delete('/book/1', headers = token2header(user1_token))
+    assert resp.status_code == 200, resp.json()
+
+    # for cancel, user can rebook same
     resp = client.post('/book/1', json = {
         'roomId': 0,
         'date': 20005,
