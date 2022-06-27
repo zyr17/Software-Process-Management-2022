@@ -29,12 +29,13 @@
           <td>{{ statusName[history.type] }}</td>
           <td>
             <button
+              v-if="history.type != 'booked'"
               @click="reBook(history)"
               class="btn btn-primary"
               disabled
               >快速重新预定</button>
             <button
-              v-if="history.status == 'booking'"
+              v-if="history.type == 'booked'"
               @click="detail"
               class="btn btn-primary"
               >详细</button>
@@ -119,18 +120,27 @@ export default {
   },
   
   created: function () {
-    this.$http.get(backend_link + 'history/' + store.state.id, {
-      headers: {
-        'Auth-Token': store.state.auth
-      }
-    }).then(
-      (response) => {
-        this.histories = response.data;
-      }
-    )
+    this.getHistory()
   },
 
   methods: {
+    getHistory() {
+      this.$http.get(backend_link + 'history/' + store.state.id, {
+        headers: {
+          'Auth-Token': store.state.auth
+        }
+      }).then(
+        (response) => {
+          this.histories = response.data;
+        },
+        (response) => {
+          this.notifications.push({
+            type: "danger",
+            message: "历史记录获取失败 " + JSON.stringify(response.body.detail),
+          });
+        }
+    )
+    },
     reBook (history) {
       alert('未实现');
     },
@@ -139,14 +149,20 @@ export default {
     },
     deleteHistory (history) {
       this.$http
-        .delete(backend_link + "history/" + history.id, {
+        .delete(backend_link + "history/" + store.state.id, 
+        {
+          body: history,
           headers: {
             'Auth-Token': store.state.auth
           },
         })
         .then(
           (response) => {
-            this.$router.push({ name: "history" });
+            this.notifications.push({
+              type: "success",
+              message: "历史记录删除成功"
+            });
+            this.getHistory()
           },
           (response) => {
             this.notifications.push({
