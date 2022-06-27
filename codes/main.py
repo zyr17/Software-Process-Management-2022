@@ -3,6 +3,7 @@ import apis.account
 import apis.studyroom
 import apis.book
 import apis.checkin
+import apis.history
 from fastapi.middleware.cors import CORSMiddleware
 
 
@@ -11,6 +12,7 @@ app.include_router(apis.account.router)
 app.include_router(apis.studyroom.router)
 app.include_router(apis.book.router)
 app.include_router(apis.checkin.router)
+app.include_router(apis.history.router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

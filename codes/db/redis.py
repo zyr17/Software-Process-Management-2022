@@ -720,3 +720,70 @@ class RedisDB:
         })
 
         return True, {}
+
+    def get_history(self, userid: int):
+        """
+        get history of one user.
+
+        if success, return True, [ {
+            type: [booked, checkin, cancel]
+            roomId: int
+            buildingNumber: str
+            classRoomNumber: str
+            bookTimeStamp: int
+            checkinTimeStamp?: int
+            cancelTimeStamp?: int
+            date: int
+            startTime: int
+            endTime: int
+        } ... ]
+        if fail, return False, { error_msg: str }
+        """
+        resp, info = self.get_user(userid)
+        if not resp:
+            return False, info
+        keys = []
+        labels = []
+        booked = self.conn.keys(f'book:{userid}:*:*:*:*')
+        keys += booked
+        labels += ['booked'] * len(booked)
+        checkin = self.conn.keys(f'checkin:{userid}:*:*:*:*')
+        keys += checkin
+        labels += ['checkin'] * len(checkin)
+        cancel = self.conn.keys(f'cancel:{userid}:*:*:*:*')
+        keys += cancel
+        labels += ['cancel'] * len(cancel)
+
+        results = []
+        for key, label in zip(keys, labels):
+            [roomid, date, start, end] = [int(y) for y in key.split(':')[2:]]
+            resp, roominfo = self.get_studyroom(roomid)
+            if not resp:
+                return False, roominfo
+            one = {
+                'type': label,
+                'roomId': roomid,
+                'buildingNumber': roominfo['buildingNumber'],
+                'classRoomNumber': roominfo['classRoomNumber'],
+                'date': date,
+                'startTime': start,
+                'endTime': end,
+            }
+            if key[:4] == 'book':
+                v = int(self.conn.get(key))
+                one['bookTimeStamp'] = v
+            elif key[:7] == 'checkin':
+                kv = self.conn.hgetall(key)
+                one['bookTimeStamp'] = int(kv['book'])
+                one['checkinTimeStamp'] = int(kv['checkin'])
+            elif key[:6] == 'cancel':
+                kv = self.conn.hgetall(key)
+                one['bookTimeStamp'] = int(kv['book'])
+                one['cancelTimeStamp'] = int(kv['cancel'])
+            else:
+                return False, { 'error_msg': f'unknown key {key}' }
+            results.append(one)
+
+        # sort descend by bookTimeStamp
+        results.sort(key = lambda x: -x['bookTimeStamp'])
+        return True, results
