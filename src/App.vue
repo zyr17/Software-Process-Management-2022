@@ -8,7 +8,7 @@
       <router-link v-if="$store.state.role == 'user'" to="/checkin" class="btn btn-success">签到</router-link>
       <router-link v-if="$store.state.role == 'user'" to="/book" class="btn btn-primary">预约</router-link>
       <router-link v-if="$store.state.role == 'user'" to="/history" class="btn btn-primary">历史</router-link>
-      <router-link v-if="$store.state.role == 'admin'" to="/all_students" class="btn btn-primary">学生管理</router-link>
+      <router-link v-if="$store.state.role == 'admin'" to="/all_students" class="btn btn-primary">用户管理</router-link>
       <router-link v-if="$store.state.role == 'admin'" to="/all_studyrooms" class="btn btn-primary">自习室管理</router-link>
       <router-link v-if="$store.state.role == 'admin'" to="/card_checkin" class="btn btn-success">刷卡签到</router-link>
       <button v-if="$store.state.role != 'none'" @click="logout" class="btn btn-primary">登出</button>
@@ -20,7 +20,7 @@
       <router-link to="/checkin" class="btn btn-success">签到</router-link>
       <router-link to="/book" class="btn btn-primary">预约</router-link>
       <router-link to="/history" class="btn btn-primary">历史</router-link>
-      <router-link to="/all_students" class="btn btn-primary">学生管理</router-link>
+      <router-link to="/all_students" class="btn btn-primary">用户管理</router-link>
       <router-link to="/all_studyrooms" class="btn btn-primary">自习室管理</router-link>
       <router-link to="/card_checkin" class="btn btn-success">刷卡签到</router-link>
     </p>
