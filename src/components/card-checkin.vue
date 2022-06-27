@@ -121,7 +121,7 @@ export default {
           response = response.data
           console.log(response)
           let text = response.userName + ' '
-                     + '时间 ' + this.to_date(response.date) + ' ' + this.to_time(response.startTime) + '-' + this.to_time(response.endTime);
+                     + '时间 ' + this.to_date(response.date) + ' ' + this.to_time(response.startTime) + '-' + this.to_time(response.endTime + 1);
           store.commit('setNotification', {
             type: "success",
             message: "签到成功\n" + text,
