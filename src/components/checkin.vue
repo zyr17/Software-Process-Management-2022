@@ -8,8 +8,7 @@
       >
     </p> -->
 
-    <notification v-bind:notifications="notifications"></notification>
-
+    
     <div v-if="!is_booked">
       <p>你目前还没有预定！点击预约前往预约。</p>
     </div>
@@ -86,7 +85,7 @@ export default {
           this.is_booked = false;
         }
         else {
-          this.notifications.push({
+          store.commit('setNotification', {
             type: "danger",
             message: "查询当前预约情况失败 " + JSON.stringify(response.body.detail),
           });
@@ -106,7 +105,7 @@ export default {
       })
       .then(
         (response) => {
-          this.notifications.push({
+          store.commit('setNotification', {
             type: "success",
             message: "签到成功",
           });
@@ -115,7 +114,7 @@ export default {
           }, success_proxy_timeout)
         },
         (response) => {
-          this.notifications.push({
+          store.commit('setNotification', {
             type: "danger",
             message: "签到失败 " + JSON.stringify(response.body.detail),
           });
@@ -131,7 +130,7 @@ export default {
         })
         .then(
           (response) => {
-            this.notifications.push({
+            store.commit('setNotification', {
               type: "success",
               message: "取消成功",
             });
@@ -140,7 +139,7 @@ export default {
             }, success_proxy_timeout)
           },
           (response) => {
-            this.notifications.push({
+            store.commit('setNotification', {
               type: "danger",
               message: "取消失败 " + JSON.stringify(response.body.detail),
             });

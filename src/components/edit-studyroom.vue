@@ -8,8 +8,7 @@
         >返回自习室信息列表页面</router-link>
     </p>
 
-    <notification v-bind:notifications="notifications"></notification>
-
+    
     <form v-on:submit.prevent="editstudyroom">
       <div class="form-group" style="display: inherit">
         <label name="studyroom_id">ID (无法修改)</label>
@@ -180,7 +179,7 @@ export default {
 
       promise.then(
           (response) => {
-            this.notifications.push({
+            store.commit('setNotification', {
               type: "success",
               message: "自习室信息" + this.mode_str + "成功",
             });
@@ -189,7 +188,7 @@ export default {
             }, success_proxy_timeout)
           },
           (response) => {
-            this.notifications.push({
+            store.commit('setNotification', {
               type: "danger",
               message: "自习室信息" + this.mode_str + "失败 " + 
                        JSON.stringify(response.body.detail),

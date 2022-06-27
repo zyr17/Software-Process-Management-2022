@@ -2,8 +2,6 @@
   <div id="login-account">
     <h1>登录</h1>
 
-    <notification v-bind:notifications="notifications"></notification>
-
     <form v-on:submit.prevent="login">
       <div class="form-group">
         <label name="account_name">用户名</label>
@@ -47,7 +45,6 @@
 </style>
 
 <script>
-import Notification from "./notifications.vue";
 
 import { backend_link, success_proxy_timeout } from "../const.vue";
 import store from "../store";
@@ -57,8 +54,10 @@ export default {
   data() {
     return {
       account: {},
-      notifications: [],
     };
+  },
+
+  created: () => {
   },
 
   methods: {
@@ -72,7 +71,7 @@ export default {
         .then(
           (response) => {
             if (response.status)
-            this.notifications.push({
+            store.commit('setNotification', {
               type: "success",
               message: "登录成功",
             });
@@ -87,7 +86,7 @@ export default {
               }, success_proxy_timeout)
           },
           (response) => {
-            this.notifications.push({
+            store.commit('setNotification', {
               type: "danger",
               message: "登录失败 " + response.body.detail.error_msg,
             });
@@ -97,7 +96,6 @@ export default {
   },
 
   components: {
-    notification: Notification,
   },
 };
 </script>

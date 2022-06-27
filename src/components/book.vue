@@ -2,8 +2,7 @@
   <div id="history">
     <h1>自习室预约</h1>
 
-    <notification v-bind:notifications="notifications"></notification>
-
+    
     <div v-if="is_booked">
       <p>你已经预约了自习室！点击签到查看详情。</p>
     </div>
@@ -65,7 +64,6 @@
 </template>
 
 <script>
-import Notification from "./notifications.vue";
 
 import { backend_link, success_proxy_timeout } from "../const.vue";
 import store from '../store';
@@ -197,7 +195,7 @@ export default {
           this.is_booked = false;
         }
         else {
-          this.notifications.push({
+          store.commit('setNotification', {
             type: "danger",
             message: "查询当前预约情况失败 " + JSON.stringify(response.body.detail),
           });
@@ -236,7 +234,7 @@ export default {
       })
       .then(
         (response) => {
-          this.notifications.push({
+          store.commit('setNotification', {
             type: "success",
             message: "预约成功"
           });
@@ -245,7 +243,7 @@ export default {
           }, success_proxy_timeout)
         },
         (response) => {
-          this.notifications.push({
+          store.commit('setNotification', {
             type: "danger",
             message: "预约失败 " + JSON.stringify(response.body.detail),
           });
@@ -316,7 +314,6 @@ export default {
   },
 
   components: {
-    notification: Notification,
   },
 };
 </script>

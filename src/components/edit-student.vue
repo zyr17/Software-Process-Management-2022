@@ -9,8 +9,7 @@
       >
     </p>
 
-    <notification v-bind:notifications="notifications"></notification>
-
+    
     <form v-on:submit.prevent="editStudent">
       <div class="form-group">
         <label name="student_id">ID</label>
@@ -116,7 +115,7 @@ export default {
         })
         .then(
           (response) => {
-            this.notifications.push({
+            store.commit('setNotification', {
               type: "success",
               message: "用户信息" + this.mode_str + "成功",
             });
@@ -125,7 +124,7 @@ export default {
             }, success_proxy_timeout)
           },
           (response) => {
-            this.notifications.push({
+            store.commit('setNotification', {
               type: "danger",
               message: "用户信息" + this.mode_str + "失败",
             });

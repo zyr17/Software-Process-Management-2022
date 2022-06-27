@@ -13,7 +13,7 @@
       <router-link v-if="$store.state.role == 'admin'" to="/card_checkin" class="btn btn-success">刷卡签到</router-link>
       <button v-if="$store.state.role != 'none'" @click="logout" class="btn btn-primary">登出</button>
     </p>
-    <p class="tab">
+    <p class="tab" v-if="false">
       <router-link to="/register" class="btn btn-primary">注册</router-link>
       <router-link to="/login" class="btn btn-primary">登录</router-link>
       <router-link to="/personal_info" class="btn btn-primary">个人信息</router-link>
@@ -25,6 +25,9 @@
       <router-link to="/card_checkin" class="btn btn-success">刷卡签到</router-link>
     </p>
     <router-view></router-view>
+    <div id="notification-div">
+      <notification></notification>
+    </div>
   </div>
 </template>
 
@@ -35,25 +38,41 @@
     .fade-enter, .fade-leave-active {
       opacity: 0
     }
+
+    #notification-div {
+        position: fixed;
+        width: 20%;
+        margin: 1%;
+        left: 78%;
+        top: 0%;
+    }
 </style>
 
 <script>
 import store from './store'
+import Notifications from './components/notifications.vue';
 
 console.log(store)
 
 export default {
-  data() {
-    return {}
-  },
-  store, 
-  methods: {
-    logout() {
-      this.$store.commit('clearAuth');
-      localStorage.clear();
-      this.$router.push('/login')
-    }
-  },
-  name: "app",
+    data() {
+        return {};
+    },
+    store,
+    methods: {
+        logout() {
+            this.$store.commit("clearAuth");
+            localStorage.clear();
+            store.commit('setNotification', {
+              type: "success",
+              message: "登出成功",
+            })
+            this.$router.push("/login");
+        }
+    },
+    created: () => {
+    },
+    name: "app",
+    components: { notification: Notifications }
 };
 </script>

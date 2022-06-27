@@ -2,8 +2,7 @@
   <div id="history">
     <h1>查看历史预定</h1>
 
-    <notification v-bind:notifications="notifications"></notification>
-
+    
     <table class="table table-hover">
       <thead>
         <tr>
@@ -134,7 +133,7 @@ export default {
           this.histories = response.data;
         },
         (response) => {
-          this.notifications.push({
+          store.commit('setNotification', {
             type: "danger",
             message: "历史记录获取失败 " + JSON.stringify(response.body.detail),
           });
@@ -158,14 +157,14 @@ export default {
         })
         .then(
           (response) => {
-            this.notifications.push({
+            store.commit('setNotification', {
               type: "success",
               message: "历史记录删除成功"
             });
             this.getHistory()
           },
           (response) => {
-            this.notifications.push({
+            store.commit('setNotification', {
               type: "danger",
               message: "历史记录删除失败 " + JSON.stringify(response.body.detail),
             });

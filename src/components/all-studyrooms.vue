@@ -135,14 +135,14 @@ export default {
         }
       }).then(
           (response) => {
-            this.notifications.push({
+            store.commit('setNotification', {
               type: "success",
               message: "自习室删除成功",
             });
             this.fetch_study_room()
           }, 
           (response) => {
-            this.notifications.push({
+            store.commit('setNotification', {
               type: "danger",
               message: "自习室删除失败" + JSON.stringify(response.body.detail),
             });

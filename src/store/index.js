@@ -25,6 +25,7 @@ export default new Vuex.Store({
         window.location.href = mainpage
       res = { auth: null, role: 'none', expire: 0, name: null, id: null }
     }
+    res.notifications = []
     return res
   },
   // 在其他视图中通过 $store.commit('setState', 10) 使用，用于修改stor存的值
@@ -44,6 +45,10 @@ export default new Vuex.Store({
     clearAuth(state) {
       state.auth = null;
       state.role = 'none';
+    },
+    setNotification(state, data) {  // 添加提醒，同时加入时间戳
+      data.notification_time = new Date()
+      state.notifications.push(data)
     }
   },
   // 相当于组件的计算属性 通过 $store.getters.doubleCount 获取计算后的值

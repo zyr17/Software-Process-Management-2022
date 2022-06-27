@@ -122,14 +122,14 @@ export default {
         })
         .then(
           (response) => {
-            this.notifications.push({
+            store.commit('setNotification', {
               type: "danger",
               message: "用户删除成功"
             });
             this.fetchStudentData()
           },
           (response) => {
-            this.notifications.push({
+            store.commit('setNotification', {
               type: "danger",
               message: "用户删除失败 " + JSON.stringify(response.body.detail),
             });

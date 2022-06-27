@@ -8,8 +8,7 @@
       >
     </p> -->
 
-    <notification v-bind:notifications="notifications"></notification>
-
+    
     <form v-on:submit.prevent="register">
       <div class="form-group" style="display: none">
         <label name="student_id">ID (自动生成, 无需填写)</label>
@@ -88,6 +87,7 @@
 import Notification from "./notifications.vue";
 
 import { backend_link, success_proxy_timeout } from "../const.vue";
+import store from '../store';
 
 
 export default {
@@ -101,7 +101,7 @@ export default {
   methods: {
     register: function () {
       if (this.student.password != this.student.password2) {
-        this.notifications.push({
+        store.commit('setNotification', {
           type: "danger",
           message: "两次密码不一致",
         });
@@ -115,7 +115,7 @@ export default {
         })
         .then(
           (response) => {
-            this.notifications.push({
+            store.commit('setNotification', {
               type: "success",
               message: "学生注册成功",
             });
@@ -124,7 +124,7 @@ export default {
             }, success_proxy_timeout)
           },
           (response) => {
-            this.notifications.push({
+            store.commit('setNotification', {
               type: "danger",
               message: "学生注册失败 " + response.body.detail.error_msg,
             });

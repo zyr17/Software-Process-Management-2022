@@ -8,8 +8,7 @@
       >
     </p> -->
 
-    <notification v-bind:notifications="notifications"></notification>
-
+    
     <form v-on:submit.prevent="update_info">
       <div class="form-group">
         <label name="student_id">ID (无法修改)</label>
@@ -127,7 +126,7 @@ export default {
     },
     update_info: function () {
       if (this.student.newPassword != this.student.password2) {
-        this.notifications.push({
+        store.commit('setNotification', {
           type: "danger",
           message: "两次密码不一致",
         });
@@ -141,16 +140,16 @@ export default {
         })
         .then(
           (response) => {
-            this.notifications.push({
+            store.commit('setNotification', {
               type: "success",
               message: "信息更新成功",
             });
             setTimeout(() => {
-              this.$router.go(0)
+              this.fetch_info()
             }, success_proxy_timeout)
           },
           (response) => {
-            this.notifications.push({
+            store.commit('setNotification', {
               type: "danger",
               message: "信息更新失败" + JSON.stringify(response.body.detail),
             });

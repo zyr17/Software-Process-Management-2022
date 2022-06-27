@@ -2,8 +2,7 @@
   <div id="history">
     <h1>刷卡签到</h1>
 
-    <notification v-bind:notifications="notifications"></notification>
-
+    
     <div>
 
       <div>
@@ -123,13 +122,13 @@ export default {
           console.log(response)
           let text = response.userName + ' '
                      + '时间 ' + this.to_date(response.date) + ' ' + this.to_time(response.startTime) + '-' + this.to_time(response.endTime);
-          this.notifications.push({
+          store.commit('setNotification', {
             type: "success",
             message: "签到成功\n" + text,
           });
         },
         (response) => {
-          this.notifications.push({
+          store.commit('setNotification', {
             type: "danger",
             message: "签到失败 " + JSON.stringify(response.body.detail),
           });
